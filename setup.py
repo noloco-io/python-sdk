@@ -10,5 +10,5 @@ setup(
     author_email='team@noloco.io',
     url='https://github.com/noloco/python-sdk',
     license='', # TODO - write LICENSE
-    packages=find_packages(exclude=('tests'))
+    packages=find_packages(exclude=('docs', 'tests'))
 )

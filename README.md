@@ -2,7 +2,7 @@
 
 ## Creating a Virtual Environment
 
-When you clone the project for the first time you'll need to setup a Python virtual environment inside the root of the project. This keeps your workspace clean and lets us isolate dependencies across Python projects.
+When you clone the project for the first time you'll want to setup a Python virtual environment inside the root of the project. This keeps your workspace clean and lets us isolate dependencies across Python projects.
 
 ```
 $ python3 -m venv env
@@ -16,7 +16,7 @@ Whenever you are working on the project you should enter the virtual environment
 $ source env/bin/activate
 ```
 
-We use `pip3` to manage dependencies.
+We use `pip3` to manage dependencies and keep track of these in `requirements.txt`.
 
 ```
 (env) $ pip3 install -r requirements.txt

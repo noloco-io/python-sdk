@@ -1,1 +1,5 @@
+autopep8
+gql[all]
+pycodestyle
+pydash
 sphinx

@@ -1,7 +1,7 @@
 from noloco.exceptions import NolocoFieldNotFoundError, NolocoUnknownError
 from noloco.fields import DataTypeFieldsBuilder
 from noloco.utils import build_data_type_args, build_operation_args, gql_type
-from pydash import pascal_case
+from pydash import get, pascal_case
 
 
 DATA_TYPE_MUTATION = '''mutation{mutation_args} {{
@@ -34,16 +34,19 @@ class MutationBuilder:
                         'type': gql_type(data_type_field['type']),
                         'value': arg_value
                     }
-                elif arg_value['connect'] is not None:
+                elif get(arg_value, 'connect') is not None:
                     # This is a relationship field, so map the arg onto an Id
                     # arg.
+                    # TODO - stronger validation and error handling.
+                    # TODO - consider supporting connecting on other fields.
                     mutation_args[arg_name + 'Id'] = {
                         'type': 'ID',
                         'value': arg_value['connect']['id']
                     }
-                elif arg_value['upload'] is not None:
+                elif get(arg_value, 'upload') is not None:
                     # This is a file upload field, so map the arg onto an
                     # Upload arg, although do not open the file yet.
+                    # TODO - stronger validation and error handling.
                     mutation_args[arg_name] = {
                         'type': 'Upload',
                         'value': arg_value['upload']['file']

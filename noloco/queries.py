@@ -1,5 +1,6 @@
 from constants import MANY_TO_ONE, ONE_TO_ONE
-from utils import find_data_type_by_name, find_field_by_name
+from utils import build_data_type_args, build_operation_args, \
+    find_data_type_by_name, find_field_by_name
 
 
 PROJECT_API_KEYS_QUERY = '''query ($projectId: String!) {
@@ -113,31 +114,6 @@ FILE_CONNECTION_QUERY = '''edges {{
 
 
 class QueryBuilder:
-    def __build_query_arg(self, arg_name, arg_value):
-        arg_type = arg_value['type']
-        return f'${arg_name}: {arg_type}'
-
-    def __build_query_args(self, args):
-        query_arg_list = ', '.join([self.__build_query_arg(
-            arg_name, arg_value) for arg_name, arg_value in args.items()])
-
-        if query_arg_list:
-            return f'({query_arg_list})'
-        else:
-            return ''
-
-    def __build_type_arg(self, arg_name):
-        return f'{arg_name}: ${arg_name}'
-
-    def __build_type_args(self, args):
-        type_arg_list = ', '.join(
-            [self.__build_type_arg(arg_name) for arg_name in args.keys()])
-
-        if type_arg_list:
-            return f'({type_arg_list})'
-        else:
-            return ''
-
     def __build_related_fields(
           self,
           fields,
@@ -248,8 +224,8 @@ class QueryBuilder:
 
     def build_data_type_collection_csv_export_query(
             self, data_type, args):
-        query_args = self.__build_query_args(args)
-        data_type_args = self.__build_type_args(args)
+        query_args = build_operation_args(args)
+        data_type_args = build_data_type_args(args)
 
         query = DATA_TYPE_COLLECTION_CSV_EXPORT_QUERY.format(
             query_args=query_args,
@@ -259,8 +235,8 @@ class QueryBuilder:
 
     def build_data_type_collection_query(
             self, data_type, data_types, include, args):
-        query_args = self.__build_query_args(args)
-        data_type_args = self.__build_type_args(args)
+        query_args = build_operation_args(args)
+        data_type_args = build_data_type_args(args)
 
         query_fragment = self.__build_data_type_collection_query_fragment(
             data_type['name'] + 'Collection',
@@ -274,8 +250,8 @@ class QueryBuilder:
         return query
 
     def build_data_type_query(self, data_type, data_types, include, args):
-        query_args = self.__build_query_args(args)
-        data_type_args = self.__build_type_args(args)
+        query_args = build_operation_args(args)
+        data_type_args = build_data_type_args(args)
 
         query_fragment = self.__build_data_type_query_fragment(
             data_type['name'], data_type, data_types, include, data_type_args)

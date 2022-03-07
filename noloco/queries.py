@@ -1,3 +1,4 @@
+from constants import MANY_TO_ONE, ONE_TO_ONE
 from utils import find_data_type_by_name, find_field_by_name
 
 
@@ -165,8 +166,8 @@ class QueryBuilder:
             relationship_schema = self.__build_data_type_schema(
                 relationship_data_type, data_types, ignore_children)
 
-            if relationship_field['relationship'] == 'ONE_TO_ONE' or \
-                    relationship_field['relationship'] == 'MANY_TO_ONE':
+            if relationship_field['relationship'] == ONE_TO_ONE or \
+                    relationship_field['relationship'] == MANY_TO_ONE:
                 relationship_schema = DATA_TYPE_FRAGMENT.format(
                     data_type_name=relationship_name,
                     data_type_args='',
@@ -185,8 +186,8 @@ class QueryBuilder:
         file_fields = []
 
         for file in files:
-            if file['relationship'] == 'ONE_TO_ONE' or \
-                    file['relationship'] == 'MANY_TO_ONE':
+            if file['relationship'] == ONE_TO_ONE or \
+                    file['relationship'] == MANY_TO_ONE:
                 file_fields.append(
                     file['name'] + ' { ' + FILE_QUERY + ' }')
             else:

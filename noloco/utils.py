@@ -1,3 +1,4 @@
+from constants import DATE, DECIMAL, INTEGER, TEXT
 from exceptions import NolocoDataTypeNotFoundError, NolocoFieldNotFoundError, \
     NolocoFieldNotUniqueError
 from pydash import find, pascal_case
@@ -59,13 +60,13 @@ def unique_args(data_type, args):
         if arg_field['unique'] is not True:
             raise NolocoFieldNotUniqueError(data_type['name'], arg_name)
 
-        if arg_field['type'] == 'TEXT':
+        if arg_field['type'] == TEXT:
             arg_type = 'String'
-        if arg_field['type'] == 'DATE':
+        if arg_field['type'] == DATE:
             arg_type = 'DateTime'
-        elif arg_field['type'] == 'INTEGER':
+        elif arg_field['type'] == INTEGER:
             arg_type = 'Int'
-        elif arg_field['type'] == 'DECIMAL':
+        elif arg_field['type'] == DECIMAL:
             arg_type = 'Float'
         else:
             # TODO - confirm which types can be unique

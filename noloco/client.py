@@ -131,7 +131,7 @@ class Noloco:
                 }
 
         Returns:
-            The result of deleting the Noloco record.
+            The result of creating the Noloco record.
         """
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
@@ -140,9 +140,6 @@ class Noloco:
             data_type,
             data_types,
             args)
-        created_at = datetime.now()
-        args['createdAt'] = {'type': 'DateTime', 'value': created_at}
-        args['updatedAt'] = {'type': 'DateTime', 'value': created_at}
         args = open_files(args)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
@@ -365,7 +362,7 @@ class Noloco:
                 }
 
         Returns:
-            The result of deleting the Noloco record.
+            The result of updating the Noloco record.
         """
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
@@ -374,9 +371,7 @@ class Noloco:
             data_type,
             data_types,
             args)
-        updated_at = datetime.now()
         args['id'] = {'type': 'ID!', 'value': id}
-        args['updatedAt'] = {'type': 'DateTime', 'value': updated_at}
         args = open_files(args)
 
         mutation = self.__mutation_builder.build_data_type_mutation(

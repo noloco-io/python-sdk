@@ -1,6 +1,9 @@
-from constants import MANY_TO_ONE, ONE_TO_ONE
-from utils import build_data_type_args, build_operation_args, \
-    find_data_type_by_name, find_field_by_name
+from noloco.constants import MANY_TO_ONE, ONE_TO_ONE
+from noloco.utils import (
+    build_data_type_args,
+    build_operation_args,
+    find_data_type_by_name,
+    find_field_by_name)
 
 
 PROJECT_API_KEYS_QUERY = '''query ($projectId: String!) {

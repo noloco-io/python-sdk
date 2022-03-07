@@ -166,8 +166,6 @@ class Noloco:
                 example:
 
                 {
-                    'lastName': True,
-                    'firstName': True,
                     'role': {
                         'include': {
                             'name': True

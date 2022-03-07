@@ -4,6 +4,34 @@ from exceptions import NolocoDataTypeNotFoundError, NolocoFieldNotFoundError, \
 from pydash import find, pascal_case
 
 
+def build_operation_arg(arg_name, arg_value):
+    arg_type = arg_value['type']
+    return f'${arg_name}: {arg_type}'
+
+
+def build_operation_args(args):
+    operation_arg_list = ', '.join([build_operation_arg(
+        arg_name, arg_value) for arg_name, arg_value in args.items()])
+
+    if operation_arg_list:
+        return f'({operation_arg_list})'
+    else:
+        return ''
+
+
+def build_data_type_arg(arg_name):
+    return f'{arg_name}: ${arg_name}'
+
+
+def build_data_type_args(args):
+    data_type_arg_list = ', '.join(
+        [build_data_type_arg(arg_name) for arg_name in args.keys()])
+    if data_type_arg_list:
+        return f'({data_type_arg_list})'
+    else:
+        return ''
+
+
 def collection_args(data_type_name, after, before, first, order_by, where):
     args = {}
 

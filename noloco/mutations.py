@@ -27,7 +27,8 @@ class MutationBuilder:
             if data_type_field is not None:
                 # The field is either a top-level or relationship field on the
                 # data type.
-                if data_type_field['relationship'] is None:
+                if data_type_field['relationship'] is None and \
+                        data_type_field['type'] != 'file':
                     # This is a top-level field, so map the arg onto a
                     # primitive.
                     mutation_args[arg_name] = {
@@ -43,7 +44,8 @@ class MutationBuilder:
                         'type': 'ID',
                         'value': arg_value['connect']['id']
                     }
-                elif get(arg_value, 'upload') is not None:
+                elif get(arg_value, 'upload') is not None and \
+                        data_type_field['type'] == 'file':
                     # This is a file upload field, so map the arg onto an
                     # Upload arg, although do not open the file yet.
                     # TODO - stronger validation and error handling.

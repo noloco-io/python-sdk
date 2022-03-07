@@ -4,13 +4,11 @@ from noloco.constants import (
     DECIMAL,
     DURATION,
     INTEGER,
-    RICH_TEXT,
     TEXT)
 from noloco.exceptions import (
     NolocoDataTypeNotFoundError,
     NolocoFieldNotFoundError,
-    NolocoFieldNotUniqueError,
-    NolocoUnknownError)
+    NolocoFieldNotUniqueError)
 from pydash import find, pascal_case
 
 
@@ -104,8 +102,6 @@ def gql_type(field_type):
         return 'Duration'
     elif field_type == BOOLEAN:
         return 'Boolean'
-    elif field_type == RICH_TEXT:
-        return 'String'
 
 
 def open_files(args):

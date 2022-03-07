@@ -97,6 +97,42 @@ class Noloco:
         return project_data_types
 
     def create(self, data_type_name, args, include={}):
+        """Creates a record in a collection.
+
+        Args:
+            data_type_name: The name of the data type the collection is for.
+                For example 'user'.
+            args: The record to create. For example:
+
+                {
+                    firstName: 'Jane',
+                    lastName: 'Doe',
+                    email: 'jane@noloco.io',
+                    company: {
+                        connect: {
+                            id: 2
+                        }
+                    },
+                    profilePicture: {
+                        upload: {
+                            file: '~/Pictures/profile.jpeg'
+                        }
+                    }
+                }
+            include: The schema that you would like back from Noloco. For
+                example:
+
+                {
+                    'role': {
+                        'include': {
+                            'name': True
+                        }
+                    }
+                }
+
+        Returns:
+            The result of deleting the Noloco record.
+        """
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
@@ -120,6 +156,28 @@ class Noloco:
         return result
 
     def delete(self, data_type_name, id, include={}):
+        """Deletes a member of a collection.
+
+        Args:
+            data_type_name: The name of the data type the collection is for.
+                For example 'user'.
+            id: The ID of the record to delete.
+            include: The schema that you would like back from Noloco. For
+                example:
+
+                {
+                    'lastName': True,
+                    'firstName': True,
+                    'role': {
+                        'include': {
+                            'name': True
+                        }
+                    }
+                }
+
+        Returns:
+            The result of deleting the Noloco record.
+        """
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
@@ -270,6 +328,43 @@ class Noloco:
             gql(query), variable_values=gql_args(args))
 
     def update(self, data_type_name, id, args, include={}):
+        """Updates a record in a collection.
+
+        Args:
+            data_type_name: The name of the data type the collection is for.
+                For example 'user'.
+            id: The ID of the record to update.
+            args: The record to update. For example:
+
+                {
+                    firstName: 'Jane',
+                    lastName: 'Doe',
+                    email: 'jane@noloco.io',
+                    company: {
+                        connect: {
+                            id: 2
+                        }
+                    },
+                    profilePicture: {
+                        upload: {
+                            file: '~/Pictures/profile.jpeg'
+                        }
+                    }
+                }
+            include: The schema that you would like back from Noloco. For
+                example:
+
+                {
+                    'role': {
+                        'include': {
+                            'name': True
+                        }
+                    }
+                }
+
+        Returns:
+            The result of deleting the Noloco record.
+        """
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 

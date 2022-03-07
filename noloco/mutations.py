@@ -39,14 +39,14 @@ class MutationBuilder:
                     # arg.
                     mutation_args[arg_name + 'Id'] = {
                         'type': 'ID',
-                        'value': arg_value['connect']
+                        'value': arg_value['connect']['id']
                     }
                 elif arg_value['upload'] is not None:
                     # This is a file upload field, so map the arg onto an
                     # Upload arg, although do not open the file yet.
                     mutation_args[arg_name] = {
                         'type': 'Upload',
-                        'value': arg_value['upload']
+                        'value': arg_value['upload']['file']
                     }
                 else:
                     raise NolocoUnknownError()

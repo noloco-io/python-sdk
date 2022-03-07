@@ -7,6 +7,24 @@ class NolocoAccountApiKeyError(Exception):
         self.error = error
 
 
+class NolocoDataTypeNotFoundError(Exception):
+    def __init__(self, data_type_name):
+        super().__init__(
+            f'Could not find data type {data_type_name} in your project.')
+
+
+class NolocoFieldNotFoundError(Exception):
+    def __init__(self, field_name):
+        super().__init__(
+            f'Could not find field {field_name}.')
+
+
+class NolocoFieldNotUniqueError(Exception):
+    def __init__(self, data_type_name, field_name):
+        super().__init__(
+            f'Field {field_name} in data type {data_type_name} is not unique.')
+
+
 class NolocoProjectApiKeyError(Exception):
     def __init__(self, project_name, error):
         super().__init__(

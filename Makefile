@@ -1,4 +1,7 @@
-.PHONY: docs
+.PHONY: tests docs
+
+tests:
+	python -m unittest
 
 docs:
 	rm -rf ./docs/_build

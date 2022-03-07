@@ -1,3 +1,6 @@
+from utils import find_data_type_by_name, find_field_by_name
+
+
 PROJECT_API_KEYS_QUERY = '''query ($projectId: String!) {
   project(projectId: $projectId) {
     id
@@ -5,6 +8,39 @@ PROJECT_API_KEYS_QUERY = '''query ($projectId: String!) {
     apiKeys {
       user
       project
+      __typename
+    }
+    __typename
+  }
+}'''
+
+
+PROJECT_DATA_TYPES_QUERY = '''query ($projectId: String!) {
+  project(projectId: $projectId) {
+    id
+    name
+    dataTypes {
+      id
+      name
+      display
+      internal
+      fields {
+        id
+        name
+        display
+        type
+        unique
+        relationship
+        reverseDisplayName
+        reverseName
+        options {
+          id
+          name
+          display
+          __typename
+        }
+        __typename
+      }
       __typename
     }
     __typename
@@ -25,10 +61,14 @@ VALIDATE_API_KEYS_QUERY = '''query ($projectToken: String!) {
 }'''
 
 
+DATA_TYPE_FRAGMENT = '''{data_type_name}{data_type_args}
+{{
+  {data_type_schema}
+}}'''
+
+
 DATA_TYPE_QUERY = '''query{query_args} {{
-  {data_type_name}{data_type_args} {{
-    {include}
-  }}
+  {data_type_fragment}
 }}'''
 
 
@@ -39,20 +79,36 @@ DATA_TYPE_COLLECTION_CSV_EXPORT_QUERY = '''query{query_args} {{
 }}'''
 
 
-DATA_TYPE_COLLECTION_QUERY = '''query{query_args} {{
-  {data_type_name}Collection{data_type_args} {{
+DATA_TYPE_COLLECTION_FRAGMENT = '''{data_type_name}{data_type_args} {{
     totalCount
     edges {{
       node {{
-        {include}
+        {data_type_schema}
       }}
     }}
     pageInfo {{
+      hasPreviousPage
       hasNextPage
+      startCursor
       endCursor
     }}
   }}
+'''
+
+
+DATA_TYPE_COLLECTION_QUERY = '''query{query_args} {{
+  {data_type_collection_fragment}
 }}'''
+
+
+FILE_QUERY = '''id uuid fileType url name'''
+
+
+FILE_CONNECTION_QUERY = '''edges {{
+  node {{
+    {file_query}
+  }}
+}}'''.format(file_query=FILE_QUERY)
 
 
 class QueryBuilder:
@@ -81,48 +137,133 @@ class QueryBuilder:
         else:
             return ''
 
-    def __serialise_field(self, field_name, field_value):
-        if field_value is True:
-            return field_name
-        else:
-            return field_name + \
-                ' { ' + self.__serialise_fields(field_value) + ' }'
+    def __build_related_fields(
+          self,
+          fields,
+          include,
+          data_types):
+        related_fields = []
 
-    def __serialise_fields(self, include):
-        return '\n'.join([self.__serialise_field(field_name, field_value)
-                          for field_name, field_value in include.items()])
+        for relationship_name, ignore_children in include.items():
+            relationship_field = find_field_by_name(
+              relationship_name, fields)
+            relationship_data_type = find_data_type_by_name(
+                relationship_field['type'], data_types)
+
+            # For example if include={'usersCompleted': True} was passed in,
+            # we will not include any relationships from the User data type.
+            # when including the usersCompleted related field. However, if
+            # include={'usersCompleted': {'company': True}} was passed in, we
+            # would recursively include the company relationship against any
+            # returned users.
+            if ignore_children is True:
+                ignore_children = {}
+
+            # Build the schema of the data type forming the relationship and
+            # recursively build the schema of further relationships specified
+            # against this.
+            relationship_schema = self.__build_data_type_schema(
+                relationship_data_type, data_types, ignore_children)
+
+            if relationship_field['relationship'] == 'ONE_TO_ONE' or \
+                    relationship_field['relationship'] == 'MANY_TO_ONE':
+                relationship_schema = DATA_TYPE_FRAGMENT.format(
+                    data_type_name=relationship_name,
+                    data_type_args='',
+                    data_type_schema=relationship_schema)
+            else:
+                relationship_schema = DATA_TYPE_COLLECTION_FRAGMENT.format(
+                    data_type_name=relationship_name,
+                    data_type_args='',
+                    data_type_schema=relationship_schema)
+
+            related_fields.append(relationship_schema)
+
+        return related_fields
+
+    def __build_file_fields(self, files):
+        file_fields = []
+
+        for file in files:
+            if file['relationship'] == 'ONE_TO_ONE' or \
+                    file['relationship'] == 'MANY_TO_ONE':
+                file_fields.append(
+                    file['name'] + ' { ' + FILE_QUERY + ' }')
+            else:
+                file_fields.append(
+                    file['name'] + ' { ' + FILE_CONNECTION_QUERY + ' }')
+
+        return file_fields
+
+    def __build_data_type_schema(
+            self,
+            data_type,
+            data_types,
+            include):
+        # All non-relationship fields on the data type are automatically
+        # included in the requested schema.
+        primary_field_schema = [
+            field['name']
+            for field
+            in data_type['fields']
+            if field['relationship'] is None]
+
+        # Only specified relationship types are included in the requested
+        # schema. This principle is applied recursively so if we include a
+        # relationship field, we only include relationships from that field if
+        # they are also specified.
+        related_field_schema = self.__build_related_fields(
+            data_type['fields'], include, data_types)
+
+        # All file relationship fields on the data type are automatically
+        # included in the requested schema.
+        file_field_schema = self.__build_file_fields(
+          field for field in data_type['fields'] if field['type'] == 'file')
+
+        all_field_names = primary_field_schema + \
+            related_field_schema + \
+            file_field_schema
+
+        return '\n'.join(all_field_names)
 
     def build_data_type_collection_csv_export_query(
-            self, data_type_name, args):
+            self, data_type, args):
         query_args = self.__build_query_args(args)
         data_type_args = self.__build_type_args(args)
 
         query = DATA_TYPE_COLLECTION_CSV_EXPORT_QUERY.format(
             query_args=query_args,
-            data_type_name=data_type_name,
+            data_type_name=data_type['name'],
             data_type_args=data_type_args)
         return query
 
-    def build_data_type_collection_query(self, data_type_name, include, args):
+    def build_data_type_collection_query(
+            self, data_type, data_types, include, args):
         query_args = self.__build_query_args(args)
         data_type_args = self.__build_type_args(args)
-        serialised_include = self.__serialise_fields(include)
+        data_type_schema = self.__build_data_type_schema(
+            data_type, data_types, include)
 
+        query_fragment = DATA_TYPE_COLLECTION_FRAGMENT.format(
+            data_type_name=data_type['name'] + 'Collection',
+            data_type_args=data_type_args,
+            data_type_schema=data_type_schema)
         query = DATA_TYPE_COLLECTION_QUERY.format(
             query_args=query_args,
-            data_type_name=data_type_name,
-            data_type_args=data_type_args,
-            include=serialised_include)
+            data_type_collection_fragment=query_fragment)
         return query
 
-    def build_data_type_query(self, data_type_name, include, args):
+    def build_data_type_query(self, data_type, data_types, include, args):
         query_args = self.__build_query_args(args)
         data_type_args = self.__build_type_args(args)
-        serialised_include = self.__serialise_fields(include)
+        data_type_schema = self.__build_data_type_schema(
+            data_type, data_types, include)
 
+        query_fragment = DATA_TYPE_FRAGMENT.format(
+            data_type_name=data_type['name'],
+            data_type_args=data_type_args,
+            data_type_schema=data_type_schema)
         query = DATA_TYPE_QUERY.format(
             query_args=query_args,
-            data_type_name=data_type_name,
-            data_type_args=data_type_args,
-            include=serialised_include)
+            data_type_fragment=query_fragment)
         return query

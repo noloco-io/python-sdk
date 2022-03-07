@@ -62,7 +62,7 @@ class MutationBuilder:
                 if related_field is not None:
                     # This is a reverse relationship field and can be
                     # connected.
-                    mutation_args[arg_name] = {
+                    mutation_args[arg_name + 'Id'] = {
                         'type': '[ID!]',
                         'value': arg_value
                     }

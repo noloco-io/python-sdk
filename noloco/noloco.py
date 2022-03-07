@@ -1,13 +1,21 @@
-from exceptions import NolocoAccountApiKeyError, \
-    NolocoProjectApiKeyError, NolocoUnknownError
 from gql import Client, gql
 from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.exceptions import TransportQueryError
-from queries import PROJECT_API_KEYS_QUERY, PROJECT_DATA_TYPES_QUERY, \
-    QueryBuilder, VALIDATE_API_KEYS_QUERY
+from noloco.exceptions import (
+    NolocoAccountApiKeyError,
+    NolocoProjectApiKeyError,
+    NolocoUnknownError)
+from noloco.queries import (
+    PROJECT_API_KEYS_QUERY,
+    PROJECT_DATA_TYPES_QUERY,
+    QueryBuilder,
+    VALIDATE_API_KEYS_QUERY)
+from noloco.utils import (
+    collection_args,
+    find_data_type_by_name,
+    gql_args,
+    unique_args)
 from pydash import get
-from utils import collection_args, find_data_type_by_name, gql_args, \
-    unique_args
 
 
 BASE_URL = 'https://api.nolocolocal.io'

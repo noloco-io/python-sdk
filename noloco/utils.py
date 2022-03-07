@@ -1,6 +1,8 @@
-from constants import DATE, DECIMAL, INTEGER, TEXT
-from exceptions import NolocoDataTypeNotFoundError, NolocoFieldNotFoundError, \
-    NolocoFieldNotUniqueError
+from noloco.constants import DATE, DECIMAL, INTEGER, TEXT
+from noloco.exceptions import (
+    NolocoDataTypeNotFoundError,
+    NolocoFieldNotFoundError,
+    NolocoFieldNotUniqueError)
 from pydash import find, pascal_case
 
 

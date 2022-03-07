@@ -1,8 +1,16 @@
-from noloco.constants import DATE, DECIMAL, INTEGER, TEXT
+from noloco.constants import (
+    BOOLEAN,
+    DATE,
+    DECIMAL,
+    DURATION,
+    INTEGER,
+    RICH_TEXT,
+    TEXT)
 from noloco.exceptions import (
     NolocoDataTypeNotFoundError,
     NolocoFieldNotFoundError,
-    NolocoFieldNotUniqueError)
+    NolocoFieldNotUniqueError,
+    NolocoUnknownError)
 from pydash import find, pascal_case
 
 
@@ -81,6 +89,55 @@ def gql_args(args):
         variables[arg] = args[arg]['value']
 
     return variables
+
+
+def gql_type(field_type):
+    if field_type == TEXT:
+        return 'String'
+    elif field_type == DATE:
+        return 'DateTime'
+    elif field_type == INTEGER:
+        return 'Int'
+    elif field_type == DECIMAL:
+        return 'Float'
+    elif field_type == DURATION:
+        return 'Duration'
+    elif field_type == BOOLEAN:
+        return 'Boolean'
+    elif field_type == RICH_TEXT:
+        return 'String'
+
+
+def open_files(args):
+    opened_files = []
+
+    try:
+        for arg_name, arg_value in args.items():
+            if arg_value['type'] == 'Upload':
+                file_path = arg_value['value']
+                open_file = open(file_path, 'rb')
+                args[arg_name]['value'] = open_file
+                opened_files.append(open_file)
+    except Exception:
+        for open_file in opened_files:
+            open_file.close()
+
+    return args
+
+
+def has_files(args):
+    for arg_value in args.values():
+        if arg_value['type'] == 'Upload':
+            return True
+
+    return False
+
+
+def close_files(args):
+    for arg_value in args.values():
+        if arg_value['type'] == 'Upload':
+            open_file = arg_value['value']
+            open_file.close()
 
 
 def unique_args(data_type, args):

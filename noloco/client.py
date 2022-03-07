@@ -146,7 +146,11 @@ class Noloco:
         args = open_files(args)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
-            'create', data_type, data_types, include, args)
+            'create',
+            data_type,
+            data_types,
+            include,
+            args)
 
         result = self.__project_client.execute(
             gql(mutation),
@@ -376,7 +380,11 @@ class Noloco:
         args = open_files(args)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
-            'update', data_type, data_types, include, args)
+            'update',
+            data_type,
+            data_types,
+            include,
+            args)
 
         result = self.__project_client.execute(
             gql(mutation),

@@ -138,7 +138,15 @@ class Noloco:
             include: The schema that you would like back from Noloco. For
                 example:
 
-                {'lastName': True, 'firstName': True, 'role': {'name': True}}
+                {
+                    'lastName': True,
+                    'firstName': True,
+                    'role': {
+                        'include': {
+                            'name': True
+                        }
+                    }
+                }
             after: The cursor to paginate results after.
             before: The cursor to paginate results before.
             first: The number of results to paginate to.
@@ -174,7 +182,15 @@ class Noloco:
             include: The schema that you would like back from Noloco. For
                 example:
 
-                {'lastName': True, 'firstName': True, 'role': {'name': True}}
+                {
+                    'lastName': True,
+                    'firstName': True,
+                    'role': {
+                        'include': {
+                            'name': True
+                        }
+                    }
+                }
             id: The ID of the record to fetch.
             uuid: The UUID of the record to fetch.
             **kwargs: Custom unique identifiers of the record to fetch. For
@@ -196,7 +212,6 @@ class Noloco:
 
         query = self.__query_builder.build_data_type_query(
             data_type, data_types, include, args)
-        print(query)
 
         return self.__project_client.execute(
             gql(query), variable_values=gql_args(args))

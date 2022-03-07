@@ -154,29 +154,28 @@ class QueryBuilder:
             # For example if include={'usersCompleted': True} was passed in,
             # we will not include any relationships from the User data type.
             # when including the usersCompleted related field. However, if
-            # include={'usersCompleted': {'company': True}} was passed in, we
-            # would recursively include the company relationship against any
-            # returned users.
+            # include={'usersCompleted': {'include': {'company': True}}} was
+            # passed in, we would recursively include the company relationship
+            # against any returned users.
             if ignore_children is True:
-                ignore_children = {}
-
-            # Build the schema of the data type forming the relationship and
-            # recursively build the schema of further relationships specified
-            # against this.
-            relationship_schema = self.__build_data_type_schema(
-                relationship_data_type, data_types, ignore_children)
+                relationship_include = {}
+            else:
+                relationship_include = ignore_children['include']
 
             if relationship_field['relationship'] == ONE_TO_ONE or \
                     relationship_field['relationship'] == MANY_TO_ONE:
-                relationship_schema = DATA_TYPE_FRAGMENT.format(
-                    data_type_name=relationship_name,
-                    data_type_args='',
-                    data_type_schema=relationship_schema)
+                relationship_schema = self.__build_data_type_query_fragment(
+                    relationship_name,
+                    relationship_data_type,
+                    data_types,
+                    relationship_include)
             else:
-                relationship_schema = DATA_TYPE_COLLECTION_FRAGMENT.format(
-                    data_type_name=relationship_name,
-                    data_type_args='',
-                    data_type_schema=relationship_schema)
+                relationship_schema = self \
+                    .__build_data_type_collection_query_fragment(
+                        relationship_name,
+                        relationship_data_type,
+                        data_types,
+                        relationship_include)
 
             related_fields.append(relationship_schema)
 
@@ -227,6 +226,26 @@ class QueryBuilder:
 
         return '\n'.join(all_field_names)
 
+    def __build_data_type_collection_query_fragment(
+            self, data_type_name, data_type, data_types, include, args=''):
+        data_type_schema = self.__build_data_type_schema(
+            data_type, data_types, include)
+
+        return DATA_TYPE_COLLECTION_FRAGMENT.format(
+            data_type_name=data_type_name,
+            data_type_args=args,
+            data_type_schema=data_type_schema)
+
+    def __build_data_type_query_fragment(
+            self, data_type_name, data_type, data_types, include, args=''):
+        data_type_schema = self.__build_data_type_schema(
+            data_type, data_types, include)
+
+        return DATA_TYPE_FRAGMENT.format(
+            data_type_name=data_type_name,
+            data_type_args=args,
+            data_type_schema=data_type_schema)
+
     def build_data_type_collection_csv_export_query(
             self, data_type, args):
         query_args = self.__build_query_args(args)
@@ -242,13 +261,13 @@ class QueryBuilder:
             self, data_type, data_types, include, args):
         query_args = self.__build_query_args(args)
         data_type_args = self.__build_type_args(args)
-        data_type_schema = self.__build_data_type_schema(
-            data_type, data_types, include)
 
-        query_fragment = DATA_TYPE_COLLECTION_FRAGMENT.format(
-            data_type_name=data_type['name'] + 'Collection',
-            data_type_args=data_type_args,
-            data_type_schema=data_type_schema)
+        query_fragment = self.__build_data_type_collection_query_fragment(
+            data_type['name'] + 'Collection',
+            data_type,
+            data_types,
+            include,
+            data_type_args)
         query = DATA_TYPE_COLLECTION_QUERY.format(
             query_args=query_args,
             data_type_collection_fragment=query_fragment)
@@ -257,13 +276,9 @@ class QueryBuilder:
     def build_data_type_query(self, data_type, data_types, include, args):
         query_args = self.__build_query_args(args)
         data_type_args = self.__build_type_args(args)
-        data_type_schema = self.__build_data_type_schema(
-            data_type, data_types, include)
 
-        query_fragment = DATA_TYPE_FRAGMENT.format(
-            data_type_name=data_type['name'],
-            data_type_args=data_type_args,
-            data_type_schema=data_type_schema)
+        query_fragment = self.__build_data_type_query_fragment(
+            data_type['name'], data_type, data_types, include, data_type_args)
         query = DATA_TYPE_QUERY.format(
             query_args=query_args,
             data_type_fragment=query_fragment)

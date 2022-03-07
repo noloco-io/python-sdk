@@ -1,4 +1,10 @@
-from noloco.constants import DATE, DECIMAL, INTEGER, TEXT
+from noloco.constants import (
+    BOOLEAN,
+    DATE,
+    DECIMAL,
+    DURATION,
+    INTEGER,
+    TEXT)
 from noloco.exceptions import (
     NolocoDataTypeNotFoundError,
     NolocoFieldNotFoundError,
@@ -81,6 +87,29 @@ def gql_args(args):
         variables[arg] = args[arg]['value']
 
     return variables
+
+
+def gql_type(field_type):
+    if field_type == TEXT:
+        return 'String'
+    elif field_type == DATE:
+        return 'DateTime'
+    elif field_type == INTEGER:
+        return 'Int'
+    elif field_type == DECIMAL:
+        return 'Float'
+    elif field_type == DURATION:
+        return 'Duration'
+    elif field_type == BOOLEAN:
+        return 'Boolean'
+
+
+def has_files(args):
+    for arg_value in args.values():
+        if arg_value['type'] == 'Upload':
+            return True
+
+    return False
 
 
 def unique_args(data_type, args):

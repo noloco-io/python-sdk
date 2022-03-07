@@ -102,12 +102,13 @@ class QueryBuilder:
         query_args = build_operation_args(args)
         data_type_args = build_data_type_args(args)
 
-        query_fragment = self.fields_builder.build_data_type_collection_fields(
+        query_fragment = self.fields_builder.build_fields(
             data_type['name'] + 'Collection',
             data_type,
             data_types,
             include,
-            data_type_args)
+            data_type_args,
+            is_collection=True)
         query = DATA_TYPE_COLLECTION_QUERY.format(
             query_args=query_args,
             data_type_collection_fragment=query_fragment)
@@ -118,7 +119,7 @@ class QueryBuilder:
         query_args = build_operation_args(args)
         data_type_args = build_data_type_args(args)
 
-        query_fragment = self.fields_builder.build_data_type_fields(
+        query_fragment = self.fields_builder.build_fields(
             data_type['name'],
             data_type,
             data_types,

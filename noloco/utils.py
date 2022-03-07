@@ -74,10 +74,7 @@ def find_field_by_name(field_name, fields):
         fields,
         lambda data_type_field: data_type_field['name'] == field_name)
 
-    if field is None:
-        raise NolocoFieldNotFoundError(field_name)
-    else:
-        return field
+    return field
 
 
 def gql_args(args):

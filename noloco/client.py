@@ -105,17 +105,17 @@ class Noloco:
             args: The record to create. For example:
 
                 {
-                    firstName: 'Jane',
-                    lastName: 'Doe',
-                    email: 'jane@noloco.io',
-                    company: {
-                        connect: {
+                    'firstName': 'Jane',
+                    'lastName': 'Doe',
+                    'email': 'jane@noloco.io',
+                    'company': {
+                        'connect': {
                             id: 2
                         }
                     },
-                    profilePicture: {
-                        upload: {
-                            file: '~/Pictures/profile.jpeg'
+                    'profilePicture': {
+                        'upload': {
+                            'file': '~/Pictures/profile.jpeg'
                         }
                     }
                 }
@@ -123,11 +123,7 @@ class Noloco:
                 example:
 
                 {
-                    'role': {
-                        'include': {
-                            'name': True
-                        }
-                    }
+                    'role': True
                 }
 
         Returns:
@@ -167,11 +163,7 @@ class Noloco:
                 example:
 
                 {
-                    'role': {
-                        'include': {
-                            'name': True
-                        }
-                    }
+                    'role': True
                 }
 
         Returns:
@@ -249,13 +241,7 @@ class Noloco:
                 example:
 
                 {
-                    'lastName': True,
-                    'firstName': True,
-                    'role': {
-                        'include': {
-                            'name': True
-                        }
-                    }
+                    'role': True
                 }
             after: The cursor to paginate results after.
             before: The cursor to paginate results before.
@@ -293,13 +279,7 @@ class Noloco:
                 example:
 
                 {
-                    'lastName': True,
-                    'firstName': True,
-                    'role': {
-                        'include': {
-                            'name': True
-                        }
-                    }
+                    'role': True
                 }
             id: The ID of the record to fetch.
             uuid: The UUID of the record to fetch.
@@ -336,17 +316,17 @@ class Noloco:
             args: The record to update. For example:
 
                 {
-                    firstName: 'Jane',
-                    lastName: 'Doe',
-                    email: 'jane@noloco.io',
-                    company: {
-                        connect: {
+                    'firstName': 'Jane',
+                    'lastName': 'Doe',
+                    'email': 'jane@noloco.io',
+                    'company': {
+                        'connect': {
                             id: 2
                         }
                     },
-                    profilePicture: {
-                        upload: {
-                            file: '~/Pictures/profile.jpeg'
+                    'profilePicture': {
+                        'upload': {
+                            'file': '~/Pictures/profile.jpeg'
                         }
                     }
                 }
@@ -354,11 +334,7 @@ class Noloco:
                 example:
 
                 {
-                    'role': {
-                        'include': {
-                            'name': True
-                        }
-                    }
+                    'role': True
                 }
 
         Returns:

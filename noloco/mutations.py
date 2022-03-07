@@ -44,14 +44,13 @@ class MutationBuilder:
                         'type': 'ID',
                         'value': arg_value['connect']['id']
                     }
-                elif get(arg_value, 'upload') is not None and \
-                        data_type_field['type'] == 'file':
+                elif data_type_field['type'] == 'file':
                     # This is a file upload field, so map the arg onto an
                     # Upload arg, although do not open the file yet.
                     # TODO - stronger validation and error handling.
                     mutation_args[arg_name] = {
                         'type': 'Upload',
-                        'value': arg_value['upload']['file']
+                        'value': arg_value
                     }
                 else:
                     raise NolocoUnknownError()

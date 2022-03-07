@@ -12,12 +12,10 @@ from noloco.queries import (
     QueryBuilder,
     VALIDATE_API_KEYS_QUERY)
 from noloco.utils import (
-    close_files,
     collection_args,
     find_data_type_by_name,
     gql_args,
     has_files,
-    open_files,
     unique_args)
 from pydash import get
 
@@ -112,11 +110,7 @@ class Noloco:
                             id: 2
                         }
                     },
-                    'profilePicture': {
-                        'upload': {
-                            'file': '~/Pictures/profile.jpeg'
-                        }
-                    }
+                    'profilePicture': [open file]
                 }
             include: The schema that you would like back from Noloco. For
                 example:
@@ -135,7 +129,6 @@ class Noloco:
             data_type,
             data_types,
             args)
-        args = open_files(args)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
             'create',
@@ -144,12 +137,10 @@ class Noloco:
             include,
             args)
 
-        result = self.__project_client.execute(
+        return self.__project_client.execute(
             gql(mutation),
             variable_values=gql_args(args),
             upload_files=has_files(args))
-        close_files(args)
-        return result
 
     def delete(self, data_type_name, id, include={}):
         """Deletes a member of a collection.
@@ -323,11 +314,7 @@ class Noloco:
                             id: 2
                         }
                     },
-                    'profilePicture': {
-                        'upload': {
-                            'file': '~/Pictures/profile.jpeg'
-                        }
-                    }
+                    'profilePicture': [open file]
                 }
             include: The schema that you would like back from Noloco. For
                 example:
@@ -347,7 +334,6 @@ class Noloco:
             data_types,
             args)
         args['id'] = {'type': 'ID!', 'value': id}
-        args = open_files(args)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
             'update',
@@ -356,9 +342,7 @@ class Noloco:
             include,
             args)
 
-        result = self.__project_client.execute(
+        return self.__project_client.execute(
             gql(mutation),
             variable_values=gql_args(args),
             upload_files=has_files(args))
-        close_files(args)
-        return result

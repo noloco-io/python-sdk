@@ -104,36 +104,12 @@ def gql_type(field_type):
         return 'Boolean'
 
 
-def open_files(args):
-    opened_files = []
-
-    try:
-        for arg_name, arg_value in args.items():
-            if arg_value['type'] == 'Upload':
-                file_path = arg_value['value']
-                open_file = open(file_path, 'rb')
-                args[arg_name]['value'] = open_file
-                opened_files.append(open_file)
-    except Exception:
-        for open_file in opened_files:
-            open_file.close()
-
-    return args
-
-
 def has_files(args):
     for arg_value in args.values():
         if arg_value['type'] == 'Upload':
             return True
 
     return False
-
-
-def close_files(args):
-    for arg_value in args.values():
-        if arg_value['type'] == 'Upload':
-            open_file = arg_value['value']
-            open_file.close()
 
 
 def unique_args(data_type, args):

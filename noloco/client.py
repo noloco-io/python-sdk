@@ -11,6 +11,7 @@ from noloco.queries import (
     PROJECT_DATA_TYPES_QUERY,
     QueryBuilder,
     VALIDATE_API_KEYS_QUERY)
+from noloco.results import Result
 from noloco.utils import (
     annotate_collection_args,
     change_where_to_lookup,
@@ -165,10 +166,16 @@ class Noloco:
             flattened_options)
 
         # Execute the mutation and return the result.
-        return self.__project_client.execute(
+        raw_result = self.__project_client.execute(
             gql(mutation),
             variable_values=gql_args(flattened_options),
             upload_files=has_files(mutation_args))
+
+        return Result.traverse(
+            data_type_name,
+            Result.unwrap(data_type_name, raw_result),
+            options,
+            self)
 
     def delete(self, data_type_name, options={}):
         """Deletes a record from a Noloco collection.
@@ -219,8 +226,14 @@ class Noloco:
             flattened_options)
 
         # Execute the mutation and return the result.
-        return self.__project_client.execute(
+        raw_result = self.__project_client.execute(
             gql(mutation), variable_values=gql_args(flattened_options))
+
+        return Result.traverse(
+            data_type_name,
+            Result.unwrap(data_type_name, raw_result),
+            options,
+            self)
 
     def export_csv(
             self,
@@ -313,9 +326,15 @@ class Noloco:
             data_type, data_types, typed_options, flattened_options)
 
         # Execute the query and return the result.
-        return self.__project_client.execute(
+        raw_result = self.__project_client.execute(
             gql(query),
             variable_values=gql_args(flattened_options))
+
+        return Result.traverse(
+            data_type_name,
+            Result.unwrap(data_type_name + 'Collection', raw_result),
+            options,
+            self)
 
     def get(self, data_type_name, options={}):
         """Fetches a record from a Noloco collection that you identify by any
@@ -365,8 +384,14 @@ class Noloco:
             data_type, data_types, typed_options, flattened_options)
 
         # Execute the query and return the result.
-        return self.__project_client.execute(
+        raw_result = self.__project_client.execute(
             gql(query), variable_values=gql_args(flattened_options))
+
+        return Result.traverse(
+            data_type_name,
+            Result.unwrap(data_type_name, raw_result),
+            options,
+            self)
 
     def update(self, data_type_name, value, options={}):
         """Updates a record in a collection.
@@ -441,7 +466,13 @@ class Noloco:
             typed_options,
             flattened_options)
 
-        return self.__project_client.execute(
+        raw_result = self.__project_client.execute(
             gql(mutation),
             variable_values=gql_args(flattened_options),
             upload_files=has_files(mutation_args))
+
+        return Result.traverse(
+            data_type_name,
+            Result.unwrap(data_type_name, raw_result),
+            options,
+            self)

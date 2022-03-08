@@ -1,5 +1,7 @@
 from noloco.fields import DataTypeFieldsBuilder
-from noloco.utils import flatten_collection_args, flatten_operation_args
+from noloco.utils import (
+  build_data_type_args,
+  build_operation_args)
 
 
 PROJECT_API_KEYS_QUERY = '''query ($projectId: String!) {
@@ -84,9 +86,9 @@ class QueryBuilder:
         self.fields_builder = DataTypeFieldsBuilder()
 
     def build_data_type_collection_csv_export_query(
-            self, data_type, args):
-        query_args = flatten_operation_args(data_type['name'], args)
-        data_type_args = flatten_collection_args(data_type['name'], args)
+            self, data_type, flattened_options):
+        query_args = build_operation_args(flattened_options)
+        data_type_args = build_data_type_args(flattened_options)
 
         query = DATA_TYPE_COLLECTION_CSV_EXPORT_QUERY.format(
             query_args=query_args,
@@ -96,15 +98,15 @@ class QueryBuilder:
         return query
 
     def build_data_type_collection_query(
-            self, data_type, data_types, response):
+            self, data_type, data_types, options, flattened_options):
         data_type_name = data_type['name'] + 'Collection'
-        query_args = flatten_operation_args(data_type_name, response)
+        query_args = build_operation_args(flattened_options)
 
         query_fragment = self.fields_builder.build_fields(
             data_type_name,
             data_type,
             data_types,
-            response,
+            options,
             is_collection=True)
         query = DATA_TYPE_COLLECTION_QUERY.format(
             query_args=query_args,
@@ -112,14 +114,14 @@ class QueryBuilder:
 
         return query
 
-    def build_data_type_query(self, data_type, data_types, response):
-        query_args = flatten_operation_args(data_type['name'], response)
+    def build_data_type_query(self, data_type, data_types, options, flattened_options):
+        query_args = build_operation_args(flattened_options)
 
         query_fragment = self.fields_builder.build_fields(
             data_type['name'],
             data_type,
             data_types,
-            response)
+            options)
         query = DATA_TYPE_QUERY.format(
             query_args=query_args,
             data_type_fragment=query_fragment)

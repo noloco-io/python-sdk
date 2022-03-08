@@ -115,7 +115,11 @@ class DataTypeFieldsBuilder:
         # relationship field, we only include relationships from that field if
         # they are also specified.
         related_field_schema = self.__build_related_fields(
-            data_type['name'], data_type_full_name, data_type['fields'], include, data_types)
+            data_type['name'],
+            data_type_full_name,
+            data_type['fields'],
+            include,
+            data_types)
 
         # All file relationship fields on the data type are automatically
         # included in the requested schema.

@@ -6,10 +6,40 @@ from noloco.constants import (
     INTEGER,
     TEXT)
 from noloco.exceptions import (
-    NolocoDataTypeNotFoundError,
-    NolocoFieldNotFoundError,
-    NolocoFieldNotUniqueError)
+    NolocoDataTypeNotFoundError)
 from pydash import find, get, pascal_case
+
+
+def annotate_collection_args(data_type, data_types, args):
+    # Process top-level supported parameters.
+    if get(args, 'after') is not None:
+        args['after'] = {'type': 'String', 'value': args['after']}
+        args.pop('before', None)
+    if get(args, 'after') is None and get(args, 'before') is not None:
+        args['before'] = {'type': 'String', 'value': args['before']}
+    if get(args, 'first') is not None:
+        args['first'] = {'type': 'Int', 'value': args['first']}
+    if get(args, 'order_by') is not None:
+        args['order_by'] = {'type': 'OrderBy', 'value': args['order_by']}
+    if get(args, 'where') is not None:
+        whereType = pascal_case(data_type['name']) + 'WhereInput'
+        args['where'] = {'type': whereType, 'value': args['where']}
+
+    # Recursively process nested supported parameters.
+    if get(args, 'include') is not None:
+        for nested_data_type_name, nested_args in args['include'].items():
+            if nested_args is not True:
+                relationship_data_type = find_relationship_data_type(
+                    nested_data_type_name,
+                    data_type['name'],
+                    data_type['fields'],
+                    data_types)
+                args['include'][nested_data_type_name] = annotate_collection_args(
+                    relationship_data_type,
+                    data_types,
+                    nested_args)
+
+    return args
 
 
 def build_operation_arg(arg_name, arg_value):
@@ -41,32 +71,39 @@ def build_data_type_args(args):
         return ''
 
 
-def traverse_operation_args(data_type_name, args):
-    flattened_operation_args = []
+def change_where_to_lookup(data_type, options, id_type='ID'):
+    where = options.pop('where')['value']
+    lookup_key = list(where.keys())[0]
 
-    for arg_name, arg_value in args.items():
-        if arg_name != 'include':
-            flattened_operation_args.append(
-                build_operation_arg(data_type_name + '_' + arg_name, arg_value))
-        else:
-            for nested_data_type_name, nested_args in args['include'].items():
-                if nested_args is not True:
-                    flattened_operation_args = flattened_operation_args + \
-                        traverse_operation_args(
-                            data_type_name + '_' + nested_data_type_name,
-                            nested_args)
+    lookup_field = find_field_by_name(lookup_key, data_type['fields'])
+    lookup_type = gql_type(lookup_field['type'])
+    lookup_value = where[lookup_key]['equals']
 
-    return flattened_operation_args
+    if lookup_key == 'id':
+        lookup_type = id_type
+
+    options[lookup_key] = {'type': lookup_type, 'value': lookup_value}
+
+    return options
 
 
-def flatten_operation_args(data_type_name, args):
-    operation_arg_list = ', '.join(
-        traverse_operation_args(data_type_name, args))
+def find_data_type_by_name(data_type_name, data_types):
+    data_type = find(
+        data_types,
+        lambda project_data_type: project_data_type['name'] == data_type_name)
 
-    if operation_arg_list:
-        return f'({operation_arg_list})'
+    if data_type is None:
+        raise NolocoDataTypeNotFoundError(data_type_name)
     else:
-        return ''
+        return data_type
+
+
+def find_field_by_name(field_name, fields):
+    field = find(
+        fields,
+        lambda data_type_field: data_type_field['name'] == field_name)
+
+    return field
 
 
 def find_relationship_data_type(
@@ -103,66 +140,6 @@ def find_relationship_data_type(
                     return candidate_data_type
 
 
-def annotate_collection_args(data_type, data_types, args):
-    # Process top-level supported parameters.
-    if get(args, 'after') is not None:
-        args['after'] = {'type': 'String', 'value': args['after']}
-        args.pop('before', None)
-    if get(args, 'after') is None and get(args, 'before') is not None:
-        args['before'] = {'type': 'String', 'value': args['before']}
-    if get(args, 'first') is not None:
-        args['first'] = {'type': 'Int', 'value': args['first']}
-    if get(args, 'order_by') is not None:
-        args['order_by'] = {'type': 'OrderBy', 'value': args['order_by']}
-    if get(args, 'where') is not None:
-        whereType = pascal_case(data_type['name']) + 'WhereInput'
-        args['where'] = {'type': whereType, 'value': args['where']}
-
-    # Recursively process nested supported parameters.
-    if get(args, 'include') is not None:
-        for nested_data_type_name, nested_args in args['include'].items():
-            if nested_args is not True:
-                relationship_data_type = find_relationship_data_type(
-                    nested_data_type_name,
-                    data_type['name'],
-                    data_type['fields'],
-                    data_types)
-                args['include'][nested_data_type_name] = annotate_collection_args(
-                    relationship_data_type,
-                    data_types,
-                    nested_args)
-
-    return args
-
-
-def traverse_collection_args(data_type_name, args):
-    flattened_collection_args = []
-
-    for arg_name, arg_value in args.items():
-        if arg_name != 'include':
-            flattened_collection_args.append(
-                build_operation_arg(data_type_name + '_' + arg_name, arg_value))
-        else:
-            for nested_data_type_name, nested_args in args['include'].items():
-                if nested_args is not True:
-                    flattened_collection_args = flattened_collection_args + \
-                        traverse_collection_args(
-                            data_type_name + '_' + nested_data_type_name,
-                            nested_args)
-
-    return flattened_collection_args
-
-
-def flatten_collection_args(data_type_name, args):
-    operation_arg_list = ', '.join(
-        traverse_collection_args(data_type_name, args))
-
-    if operation_arg_list:
-        return f'({operation_arg_list})'
-    else:
-        return ''
-
-
 def flatten_args(data_type_name, args):
     flattened_args = {}
 
@@ -180,25 +157,6 @@ def flatten_args(data_type_name, args):
                         flattened_args[flattened_nested_arg] = flattened_nested_args[flattened_nested_arg]
 
     return flattened_args
-
-
-def find_data_type_by_name(data_type_name, data_types):
-    data_type = find(
-        data_types,
-        lambda project_data_type: project_data_type['name'] == data_type_name)
-
-    if data_type is None:
-        raise NolocoDataTypeNotFoundError(data_type_name)
-    else:
-        return data_type
-
-
-def find_field_by_name(field_name, fields):
-    field = find(
-        fields,
-        lambda data_type_field: data_type_field['name'] == field_name)
-
-    return field
 
 
 def gql_args(args):
@@ -231,27 +189,3 @@ def has_files(args):
             return True
 
     return False
-
-
-def unique_args(data_type, args):
-    for arg_name, arg_value in args:
-        arg_field = find_field_by_name(arg_name, data_type['fields'])
-
-        if arg_field['unique'] is not True:
-            raise NolocoFieldNotUniqueError(data_type['name'], arg_name)
-
-        if arg_field['type'] == TEXT:
-            arg_type = 'String'
-        if arg_field['type'] == DATE:
-            arg_type = 'DateTime'
-        elif arg_field['type'] == INTEGER:
-            arg_type = 'Int'
-        elif arg_field['type'] == DECIMAL:
-            arg_type = 'Float'
-        else:
-            # TODO - confirm which types can be unique
-            raise NolocoFieldNotUniqueError(data_type['name'], arg_name)
-
-        args[arg_name] = {'type': arg_type, 'value': arg_value}
-
-    return args

@@ -3,6 +3,7 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.exceptions import TransportQueryError
 from noloco.exceptions import (
     NolocoAccountApiKeyError,
+    NolocoFieldNotUniqueError,
     NolocoProjectApiKeyError,
     NolocoUnknownError)
 from noloco.mutations import MutationBuilder
@@ -13,12 +14,12 @@ from noloco.queries import (
     VALIDATE_API_KEYS_QUERY)
 from noloco.utils import (
     annotate_collection_args,
+    change_where_to_lookup,
     find_data_type_by_name,
     flatten_args,
     gql_args,
-    has_files,
-    unique_args)
-from pydash import get
+    has_files)
+from pydash import get, pascal_case
 
 
 BASE_URL = 'https://api.nolocolocal.io'
@@ -94,13 +95,13 @@ class Noloco:
 
         return project_data_types
 
-    def create(self, data_type_name, record, response={}):
+    def create(self, data_type_name, value, options={}):
         """Creates a record in a collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            record: The record to create. For example:
+            value: The record to create. For example:
 
                 {
                     'firstName': 'Jane',
@@ -113,7 +114,7 @@ class Noloco:
                     },
                     'profilePicture': [open file]
                 }
-            response: The schema that you would like back from Noloco. For
+            options: The schema that you would like back from Noloco. For
                 example:
 
                 {
@@ -132,35 +133,56 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
-        record = self.__mutation_builder.build_data_type_mutation_args(
+        # Based on the value provided to update, derive the arguments that will
+        # be used on the mutation.
+        mutation_args = self.__mutation_builder.build_data_type_mutation_args(
             data_type,
             data_types,
-            record)
+            value)
+
+        # Based on the options provided, derive the response options and
+        # configure the unique field lookup.
+        typed_options = annotate_collection_args(
+            data_type,
+            data_types,
+            options)
+
+        # Join the mutation arguments with the lookup and response options.
+        typed_options.update(mutation_args)
+
+        # Flatten the options to be added to the top level of the mutation.
+        mutation_type = 'create'
+        flattened_options = flatten_args(
+            mutation_type + pascal_case(data_type_name),
+            typed_options)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
-            'create',
+            mutation_type,
             data_type,
             data_types,
-            response,
-            record)
+            typed_options,
+            flattened_options)
 
         return self.__project_client.execute(
             gql(mutation),
-            variable_values=gql_args(record),
-            upload_files=has_files(record))
+            variable_values=gql_args(flattened_options),
+            upload_files=has_files(mutation_args))
 
-    def delete(self, data_type_name, id, include={}):
+    def delete(self, data_type_name, options={}):
         """Deletes a member of a collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            id: The ID of the record to delete.
-            include: The schema that you would like back from Noloco. For
+            options: The schema that you would like back from Noloco. For
                 example:
 
                 {
-                    'role': True
+                    'where': {
+                        'id': {
+                            'equals': 2
+                        }
+                    }
                 }
 
         Returns:
@@ -169,17 +191,33 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
-        args = {'id': {'type': 'ID!', 'value': id}}
+        # Based on the options provided, derive the response options and
+        # configure the unique field lookup.
+        typed_options = annotate_collection_args(
+            data_type,
+            data_types,
+            options)
+        typed_options = change_where_to_lookup(
+            data_type,
+            typed_options,
+            id_type='ID!')
+
+        # Flatten the options to be added to the top level of the mutation.
+        mutation_type = 'delete'
+        flattened_options = flatten_args(
+            mutation_type + pascal_case(data_type_name),
+            typed_options)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
             'delete',
             data_type,
             data_types,
-            include,
-            args)
+            typed_options,
+            flattened_options)
 
-        return self.__project_client.execute(
-            gql(mutation), variable_values=gql_args(args))
+        print(mutation)
+        #return self.__project_client.execute(
+        #    gql(mutation), variable_values=gql_args(flattened_options))
 
     def export_csv(
             self,
@@ -222,14 +260,14 @@ class Noloco:
     def find(
             self,
             data_type_name,
-            response={}):
+            options={}):
         """Finds the members of a collection meeting the criteria you
             specified.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            response: The schema that you would like back from Noloco. For
+            options: The schema that you would like back from Noloco. For
                 example:
 
                 {
@@ -256,33 +294,41 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
-        args = annotate_collection_args(data_type, data_types, response)
+        typed_options = annotate_collection_args(
+            data_type,
+            data_types,
+            options)
+        flattened_options = flatten_args(
+            data_type_name + 'Collection',
+            typed_options)
 
         query = self.__query_builder.build_data_type_collection_query(
-            data_type, data_types, args)
+            data_type, data_types, typed_options, flattened_options)
 
         return self.__project_client.execute(
             gql(query),
-            variable_values=gql_args(flatten_args(data_type_name + 'Collection', args)))
+            variable_values=gql_args(flattened_options))
 
-    def get(self, data_type_name, include={}, id=None, uuid=None, **kwargs):
+    def get(self, data_type_name, options={}):
         """Fetches the record of a collection you identify.
 
         Args:
             data_type_name: The name of the data type you want to fetch. For
                 example 'user'.
-            include: The schema that you would like back from Noloco. For
+            options: The schema that you would like back from Noloco. For
                 example:
 
                 {
-                    'role': True
+                    'include': {
+                        'company': True,
+                        'role': True
+                    }
+                    'where': {
+                        'id': {
+                            'equals': 2
+                        }
+                    }
                 }
-            id: The ID of the record to fetch.
-            uuid: The UUID of the record to fetch.
-            **kwargs: Custom unique identifiers of the record to fetch. For
-                example:
-
-                email='team@noloco.io'
 
         Returns:
             The result of looking up the Noloco record.
@@ -290,26 +336,29 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
-        args = unique_args(data_type, kwargs)
-        if id is not None:
-            args['id'] = {'type': 'ID', 'value': id}
-        if uuid is not None:
-            args['uuid'] = {'type': 'String', 'value': uuid}
+        typed_options = annotate_collection_args(
+            data_type,
+            data_types,
+            options)
+        typed_options = change_where_to_lookup(data_type, typed_options)
+
+        flattened_options = flatten_args(
+            data_type_name,
+            typed_options)
 
         query = self.__query_builder.build_data_type_query(
-            data_type, data_types, include, args)
+            data_type, data_types, typed_options, flattened_options)
 
         return self.__project_client.execute(
-            gql(query), variable_values=gql_args(args))
+            gql(query), variable_values=gql_args(flattened_options))
 
-    def update(self, data_type_name, id, args, include={}):
+    def update(self, data_type_name, value, options={}):
         """Updates a record in a collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            id: The ID of the record to update.
-            args: The record to update. For example:
+            value: The record to update. For example:
 
                 {
                     'firstName': 'Jane',
@@ -322,11 +371,18 @@ class Noloco:
                     },
                     'profilePicture': [open file]
                 }
-            include: The schema that you would like back from Noloco. For
+            options: The schema that you would like back from Noloco. For
                 example:
 
                 {
-                    'role': True
+                    'include': {
+                        'role': True
+                    }
+                    'where': {
+                        'id': {
+                            'equals': 2
+                        }
+                    }
                 }
 
         Returns:
@@ -335,39 +391,38 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
-        args = self.__mutation_builder.build_data_type_mutation_args(
+        # Based on the value provided to update, derive the arguments that will
+        # be used on the mutation.
+        mutation_args = self.__mutation_builder.build_data_type_mutation_args(
             data_type,
             data_types,
-            args)
-        args['id'] = {'type': 'ID!', 'value': id}
+            value)
+
+        # Based on the options provided, derive the response options and
+        # configure the unique field lookup.
+        typed_options = annotate_collection_args(
+            data_type,
+            data_types,
+            options)
+        typed_options = change_where_to_lookup(data_type, typed_options, id_type='ID!')
+
+        # Join the mutation arguments with the lookup and response options.
+        typed_options.update(mutation_args)
+
+        # Flatten the options to be added to the top level of the mutation.
+        mutation_type = 'update'
+        flattened_options = flatten_args(
+            mutation_type + pascal_case(data_type_name),
+            typed_options)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
-            'update',
+            mutation_type,
             data_type,
             data_types,
-            include,
-            args)
+            typed_options,
+            flattened_options)
 
         return self.__project_client.execute(
             gql(mutation),
-            variable_values=gql_args(args),
-            upload_files=has_files(args))
-
-noloco = Noloco('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInByb2plY3QiOiJ0ZXN0IiwidHlwZSI6IkFQSSIsImlhdCI6MTY0NjczOTI5N30.PQ6FoKx1sz8U57xbFu4TrSbhbemOWv0mjwyPIs_lRdg', 'test')
-print(noloco.find('user', {
-    'include': {
-        'role': True,
-        'sentMessagesCollection': {
-            'where': {
-                'id': {
-                    'gt': 2
-                }
-            }
-        }
-    },
-    'where': {
-        'id': {
-            'gt': 2
-        }
-    }
-}))
+            variable_values=gql_args(flattened_options),
+            upload_files=has_files(mutation_args))

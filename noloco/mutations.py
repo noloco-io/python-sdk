@@ -81,17 +81,15 @@ class MutationBuilder:
             mutation,
             data_type,
             data_types,
-            include,
-            args):
-        mutation_args = build_operation_args(args)
-        data_type_args = build_data_type_args(args)
+            options,
+            flattened_options):
+        mutation_args = build_operation_args(flattened_options)
 
-        mutation_fragment = self.fields_builder.build_data_type_fields(
+        mutation_fragment = self.fields_builder.build_fields(
             mutation + pascal_case(data_type['name']),
             data_type,
             data_types,
-            include,
-            data_type_args)
+            options)
 
         return DATA_TYPE_MUTATION.format(
             mutation_args=mutation_args,

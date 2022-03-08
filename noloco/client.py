@@ -3,7 +3,6 @@ from gql.transport.aiohttp import AIOHTTPTransport
 from gql.transport.exceptions import TransportQueryError
 from noloco.exceptions import (
     NolocoAccountApiKeyError,
-    NolocoFieldNotUniqueError,
     NolocoProjectApiKeyError,
     NolocoUnknownError)
 from noloco.mutations import MutationBuilder
@@ -96,7 +95,7 @@ class Noloco:
         return project_data_types
 
     def create(self, data_type_name, value, options={}):
-        """Creates a record in a collection.
+        """Creates a record in a Noloco collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
@@ -114,8 +113,10 @@ class Noloco:
                     },
                     'profilePicture': [open file]
                 }
-            options: The schema that you would like back from Noloco. For
-                example:
+            options: After creating the record in the Noloco collection, the
+                created record will be returned along with it's top-level
+                fields. If you would like to also return some relationship
+                fields you can do them using options. For example:
 
                 {
                     'include': {
@@ -128,7 +129,7 @@ class Noloco:
                 }
 
         Returns:
-            The result of creating the Noloco record.
+            The record that was created in the Noloco collection.
         """
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
@@ -140,22 +141,22 @@ class Noloco:
             data_types,
             value)
 
-        # Based on the options provided, derive the response options and
-        # configure the unique field lookup.
+        # Based on the options provided, derive the response options.
         typed_options = annotate_collection_args(
             data_type,
             data_types,
             options)
 
-        # Join the mutation arguments with the lookup and response options.
+        # Join the mutation arguments with the response options.
         typed_options.update(mutation_args)
 
-        # Flatten the options to be added to the top level of the mutation.
+        # Flatten the options.
         mutation_type = 'create'
         flattened_options = flatten_args(
             mutation_type + pascal_case(data_type_name),
             typed_options)
 
+        # Build the mutation.
         mutation = self.__mutation_builder.build_data_type_mutation(
             mutation_type,
             data_type,
@@ -163,19 +164,20 @@ class Noloco:
             typed_options,
             flattened_options)
 
+        # Execute the mutation and return the result.
         return self.__project_client.execute(
             gql(mutation),
             variable_values=gql_args(flattened_options),
             upload_files=has_files(mutation_args))
 
     def delete(self, data_type_name, options={}):
-        """Deletes a member of a collection.
+        """Deletes a record from a Noloco collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            options: The schema that you would like back from Noloco. For
-                example:
+            options: The configuration for the deletion. At a minimum this must
+                identify the record to be deleted by any of its unique fields.:
 
                 {
                     'where': {
@@ -186,7 +188,7 @@ class Noloco:
                 }
 
         Returns:
-            The result of deleting the Noloco record.
+            The record that was deleted from the Noloco collection.
         """
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
@@ -202,12 +204,13 @@ class Noloco:
             typed_options,
             id_type='ID!')
 
-        # Flatten the options to be added to the top level of the mutation.
+        # Flatten the options.
         mutation_type = 'delete'
         flattened_options = flatten_args(
             mutation_type + pascal_case(data_type_name),
             typed_options)
 
+        # Build the mutation.
         mutation = self.__mutation_builder.build_data_type_mutation(
             'delete',
             data_type,
@@ -215,9 +218,9 @@ class Noloco:
             typed_options,
             flattened_options)
 
-        print(mutation)
-        #return self.__project_client.execute(
-        #    gql(mutation), variable_values=gql_args(flattened_options))
+        # Execute the mutation and return the result.
+        return self.__project_client.execute(
+            gql(mutation), variable_values=gql_args(flattened_options))
 
     def export_csv(
             self,
@@ -257,18 +260,17 @@ class Noloco:
         return self.__project_client.execute(
             gql(query), variable_values=gql_args(args))
 
-    def find(
-            self,
-            data_type_name,
-            options={}):
-        """Finds the members of a collection meeting the criteria you
-            specified.
+    def find(self, data_type_name, options={}):
+        """Searches a Noloco collection for records matching the provided
+        criteria.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            options: The schema that you would like back from Noloco. For
-                example:
+            options: The configuration for the search. Any matching records
+                will be returned along with their top-level fields. If you
+                would like to also return some relationship fields you can do
+                them using options. For example:
 
                 {
                     'after': '...',
@@ -294,29 +296,38 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
+        # Based on the options provided, derive the search and response
+        # options.
         typed_options = annotate_collection_args(
             data_type,
             data_types,
             options)
+
+        # Flatten the options.
         flattened_options = flatten_args(
             data_type_name + 'Collection',
             typed_options)
 
+        # Build the query.
         query = self.__query_builder.build_data_type_collection_query(
             data_type, data_types, typed_options, flattened_options)
 
+        # Execute the query and return the result.
         return self.__project_client.execute(
             gql(query),
             variable_values=gql_args(flattened_options))
 
     def get(self, data_type_name, options={}):
-        """Fetches the record of a collection you identify.
+        """Fetches a record from a Noloco collection that you identify by any
+        of its unique fields.
 
         Args:
             data_type_name: The name of the data type you want to fetch. For
                 example 'user'.
-            options: The schema that you would like back from Noloco. For
-                example:
+            options: The configuration for the lookup. The matching record will
+                be returned along with its top-level fields. If you would like
+                to also return some relationship fields you can do them using
+                options. For example:
 
                 {
                     'include': {
@@ -336,19 +347,24 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
+        # Based on the options provided, derive the response options and
+        # configure the unique field lookup.
         typed_options = annotate_collection_args(
             data_type,
             data_types,
             options)
         typed_options = change_where_to_lookup(data_type, typed_options)
 
+        # Flatten the options.
         flattened_options = flatten_args(
             data_type_name,
             typed_options)
 
+        # Build the query.
         query = self.__query_builder.build_data_type_query(
             data_type, data_types, typed_options, flattened_options)
 
+        # Execute the query and return the result.
         return self.__project_client.execute(
             gql(query), variable_values=gql_args(flattened_options))
 

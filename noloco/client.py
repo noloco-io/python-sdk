@@ -12,8 +12,9 @@ from noloco.queries import (
     QueryBuilder,
     VALIDATE_API_KEYS_QUERY)
 from noloco.utils import (
-    collection_args,
+    annotate_collection_args,
     find_data_type_by_name,
+    flatten_args,
     gql_args,
     has_files,
     unique_args)
@@ -93,13 +94,13 @@ class Noloco:
 
         return project_data_types
 
-    def create(self, data_type_name, args, include={}):
+    def create(self, data_type_name, record, response={}):
         """Creates a record in a collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            args: The record to create. For example:
+            record: The record to create. For example:
 
                 {
                     'firstName': 'Jane',
@@ -112,11 +113,17 @@ class Noloco:
                     },
                     'profilePicture': [open file]
                 }
-            include: The schema that you would like back from Noloco. For
+            response: The schema that you would like back from Noloco. For
                 example:
 
                 {
-                    'role': True
+                    'include': {
+                        'company': {
+                            'include': {
+                                'usersCollection': True
+                            }
+                        }
+                    }
                 }
 
         Returns:
@@ -125,22 +132,22 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
-        args = self.__mutation_builder.build_data_type_mutation_args(
+        record = self.__mutation_builder.build_data_type_mutation_args(
             data_type,
             data_types,
-            args)
+            record)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
             'create',
             data_type,
             data_types,
-            include,
-            args)
+            response,
+            record)
 
         return self.__project_client.execute(
             gql(mutation),
-            variable_values=gql_args(args),
-            upload_files=has_files(args))
+            variable_values=gql_args(record),
+            upload_files=has_files(record))
 
     def delete(self, data_type_name, id, include={}):
         """Deletes a member of a collection.
@@ -203,7 +210,7 @@ class Noloco:
             The base64 encoded string result of querying the Noloco collection
             and exporting it as a CSV.
         """
-        args = collection_args(
+        args = annotate_collection_args(
             data_type_name, after, before, first, order_by, where)
 
         query = self.__query_builder \
@@ -215,34 +222,33 @@ class Noloco:
     def find(
             self,
             data_type_name,
-            include={},
-            after=None,
-            before=None,
-            first=None,
-            order_by=None,
-            where=None):
+            response={}):
         """Finds the members of a collection meeting the criteria you
             specified.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            include: The schema that you would like back from Noloco. For
+            response: The schema that you would like back from Noloco. For
                 example:
 
                 {
-                    'role': True
+                    'after': '...',
+                    'before': '...',
+                    'first': '...',
+                    'include': {
+                        'role': True
+                    },
+                    'order_by': {
+                        'direction': 'ASC',
+                        'field': 'createdAt'
+                    }
+                    'where': {
+                        'id': {
+                            'gt': 5
+                        }
+                    }
                 }
-            after: The cursor to paginate results after.
-            before: The cursor to paginate results before.
-            first: The number of results to paginate to.
-            order_by: The order to sort results in. For example:
-
-                { 'direction': 'ASC', field: 'createdAt' }
-            where: The filter that you would like to apply to the collection.
-                For example:
-
-                { 'roleId': { 'equals': 2 } }
 
         Returns:
             The result of querying the Noloco collection.
@@ -250,14 +256,14 @@ class Noloco:
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
 
-        args = collection_args(
-            data_type_name, after, before, first, order_by, where)
+        args = annotate_collection_args(data_type, data_types, response)
 
         query = self.__query_builder.build_data_type_collection_query(
-            data_type, data_types, include, args)
+            data_type, data_types, args)
 
         return self.__project_client.execute(
-            gql(query), variable_values=gql_args(args))
+            gql(query),
+            variable_values=gql_args(flatten_args(data_type_name + 'Collection', args)))
 
     def get(self, data_type_name, include={}, id=None, uuid=None, **kwargs):
         """Fetches the record of a collection you identify.
@@ -346,3 +352,22 @@ class Noloco:
             gql(mutation),
             variable_values=gql_args(args),
             upload_files=has_files(args))
+
+noloco = Noloco('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIsInByb2plY3QiOiJ0ZXN0IiwidHlwZSI6IkFQSSIsImlhdCI6MTY0NjczOTI5N30.PQ6FoKx1sz8U57xbFu4TrSbhbemOWv0mjwyPIs_lRdg', 'test')
+print(noloco.find('user', {
+    'include': {
+        'role': True,
+        'sentMessagesCollection': {
+            'where': {
+                'id': {
+                    'gt': 2
+                }
+            }
+        }
+    },
+    'where': {
+        'id': {
+            'gt': 2
+        }
+    }
+}))

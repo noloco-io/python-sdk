@@ -1,7 +1,8 @@
 from noloco.constants import MANY_TO_MANY, MANY_TO_ONE, ONE_TO_ONE
 from noloco.utils import (
-    find_data_type_by_name,
-    find_field_by_name)
+    build_data_type_args,
+    find_field_by_name,
+    find_relationship_data_type)
 
 
 DATA_TYPE_FIELDS = '''{data_type_name}{data_type_args}
@@ -41,6 +42,7 @@ class DataTypeFieldsBuilder:
     def __build_related_fields(
           self,
           data_type_name,
+          data_type_full_name,
           fields,
           include,
           data_types):
@@ -49,31 +51,11 @@ class DataTypeFieldsBuilder:
         for relationship_name, ignore_children in include.items():
             relationship_field = find_field_by_name(
               relationship_name, fields)
-
-            if relationship_field is not None:
-                # If the relationship field exists on the parent data type then
-                # this is a forward relationship and we can simply look up the
-                # relationship data type by the corresponding field type.
-                relationship_data_type = find_data_type_by_name(
-                    relationship_field['type'], data_types)
-            else:
-                # If there isn't a corresponding relationship field on the
-                # parent data type then this is a reverse relationship and we
-                # have to search for the relationship data type by it having a
-                # field of the expected reverseName and type matching the
-                # parent type.
-                for candidate_data_type in data_types:
-                    candidate_fields = [
-                        field
-                        for field
-                        in candidate_data_type['fields']
-                        if field['reverseName'] is not None]
-
-                    for field in candidate_fields:
-                        reverseName = field['reverseName'] + 'Collection'
-                        if field['name'] == data_type_name and \
-                                reverseName == relationship_name:
-                            relationship_data_type = candidate_data_type
+            relationship_data_type = find_relationship_data_type(
+                relationship_name,
+                data_type_name,
+                fields,
+                data_types)
 
             # For example if include={'usersCompleted': True} was passed in,
             # we will not include any relationships from the User data type.
@@ -82,10 +64,9 @@ class DataTypeFieldsBuilder:
             # passed in, we would recursively include the company relationship
             # against any returned users.
             if ignore_children is True:
-                relationship_include = {}
+                response = {}
             else:
-                relationship_include = ignore_children['include']
-                # TODO - support where, after, before etc.
+                response = ignore_children
 
             is_collection = relationship_field is None or \
                 relationship_field['relationship'] == MANY_TO_MANY
@@ -93,7 +74,8 @@ class DataTypeFieldsBuilder:
                     relationship_name,
                     relationship_data_type,
                     data_types,
-                    relationship_include,
+                    response,
+                    data_type_path=data_type_full_name + '_',
                     is_collection=is_collection)
 
             related_fields.append(relationship_schema)
@@ -116,6 +98,7 @@ class DataTypeFieldsBuilder:
 
     def __build_data_type_schema(
             self,
+            data_type_full_name,
             data_type,
             data_types,
             include):
@@ -132,7 +115,7 @@ class DataTypeFieldsBuilder:
         # relationship field, we only include relationships from that field if
         # they are also specified.
         related_field_schema = self.__build_related_fields(
-            data_type['name'], data_type['fields'], include, data_types)
+            data_type['name'], data_type_full_name, data_type['fields'], include, data_types)
 
         # All file relationship fields on the data type are automatically
         # included in the requested schema.
@@ -150,11 +133,24 @@ class DataTypeFieldsBuilder:
             data_type_name,
             data_type,
             data_types,
-            include,
-            args='',
+            response,
+            data_type_path='',
             is_collection=False):
+        data_type_full_name = data_type_path + data_type_name
+
+        # Each top level key on the response object gets fully qualified by the
+        # nesting path and mapped ont
+        args = {}
+        include = {}
+        for arg_name, arg_value in response.items():
+            if arg_name == 'include':
+                include = arg_value
+            else:
+                args[data_type_full_name + '_' + arg_name] = arg_value
+        data_type_args = build_data_type_args(args)
+
         data_type_schema = self.__build_data_type_schema(
-            data_type, data_types, include)
+            data_type_full_name, data_type, data_types, include)
 
         if is_collection:
             base_fragment = DATA_TYPE_COLLECTION_FIELDS
@@ -163,5 +159,5 @@ class DataTypeFieldsBuilder:
 
         return base_fragment.format(
             data_type_name=data_type_name,
-            data_type_args=args,
+            data_type_args=data_type_args,
             data_type_schema=data_type_schema)

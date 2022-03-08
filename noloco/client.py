@@ -156,7 +156,7 @@ class Noloco:
             mutation_type + pascal_case(data_type_name),
             typed_options)
 
-        # Build the mutation.
+        # Build the mutation.
         mutation = self.__mutation_builder.build_data_type_mutation(
             mutation_type,
             data_type,
@@ -420,7 +420,10 @@ class Noloco:
             data_type,
             data_types,
             options)
-        typed_options = change_where_to_lookup(data_type, typed_options, id_type='ID!')
+        typed_options = change_where_to_lookup(
+            data_type,
+            typed_options,
+            id_type='ID!')
 
         # Join the mutation arguments with the lookup and response options.
         typed_options.update(mutation_args)

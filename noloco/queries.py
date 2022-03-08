@@ -114,7 +114,12 @@ class QueryBuilder:
 
         return query
 
-    def build_data_type_query(self, data_type, data_types, options, flattened_options):
+    def build_data_type_query(
+            self,
+            data_type,
+            data_types,
+            options,
+            flattened_options):
         query_args = build_operation_args(flattened_options)
 
         query_fragment = self.fields_builder.build_fields(

@@ -34,10 +34,11 @@ def annotate_collection_args(data_type, data_types, args):
                     data_type['name'],
                     data_type['fields'],
                     data_types)
-                args['include'][nested_data_type_name] = annotate_collection_args(
-                    relationship_data_type,
-                    data_types,
-                    nested_args)
+                args['include'][nested_data_type_name] = \
+                    annotate_collection_args(
+                        relationship_data_type,
+                        data_types,
+                        nested_args)
 
     return args
 
@@ -154,7 +155,8 @@ def flatten_args(data_type_name, args):
                         nested_args)
 
                     for flattened_nested_arg in flattened_nested_args.keys():
-                        flattened_args[flattened_nested_arg] = flattened_nested_args[flattened_nested_arg]
+                        flattened_args[flattened_nested_arg] = \
+                            flattened_nested_args[flattened_nested_arg]
 
     return flattened_args
 

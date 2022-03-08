@@ -1,7 +1,7 @@
 from noloco.exceptions import NolocoFieldNotFoundError, NolocoUnknownError
 from noloco.fields import DataTypeFieldsBuilder
 from noloco.utils import build_data_type_args, build_operation_args, gql_type
-from pydash import get, pascal_case
+from pydash import find, get, pascal_case
 
 
 DATA_TYPE_MUTATION = '''mutation{mutation_args} {{
@@ -22,7 +22,7 @@ class MutationBuilder:
                 for field
                 in data_type['fields']
                 if field['name'] == arg_name]
-            data_type_field = data_type_fields[0]
+            data_type_field = find(data_type_fields)
 
             if data_type_field is not None:
                 # The field is either a top-level or relationship field on the

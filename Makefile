@@ -1,7 +1,8 @@
 .PHONY: tests docs
 
 tests:
-	python -m unittest
+	coverage run -m unittest discover
+	coverage report
 
 docs:
 	rm -rf ./docs/_build

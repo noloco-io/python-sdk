@@ -146,7 +146,7 @@ class CollectionResult:
 
     def next_page(self):
         if not self.__page_info['hasNextPage']:
-            None
+            return None
         else:
             # Fetch the options that applied to this collection, remove the
             # 'before' parameter if it exists and set the 'after' parameter to

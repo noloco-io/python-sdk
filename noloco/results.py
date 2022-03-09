@@ -52,11 +52,7 @@ class Result(dict):
         self[attr] = value
 
     @staticmethod
-    def build(data_type_name, result, options, client, is_collection=False):
-        result_name = data_type_name
-        if is_collection:
-            result_name += 'Collection'
-
+    def build(data_type_name, result_name, result, options, client):
         result = Result(
             data_type_name,
             result_name,

@@ -1,16 +1,20 @@
-from pydash import get
+from pydash import camel_case, get
 
 
 class Result(dict):
-    def __init__(self, data_type_name, result, options, client):
+    def __init__(self, result, options, client):
         for key, value in result.items():
             if type(value) is dict:
                 key_options = get(options, f'include.{key}', {})
-                result[key] = Result.traverse(
-                    value,
-                    data_type_name,
-                    key_options,
-                    client)
+
+                if get(value, 'edges') is not None:
+                    # Wrap a collection in a CollectionResult to give it pagination
+                    # helpers.
+                    result[key] = CollectionResult(value, key_options, client)
+                else:
+                    # Otherwise traverse each field in the result and recursively wrap
+                    # any that are collections.
+                    result[key] = Result(value, key_options, client)
             else:
                 result[key] = value
 
@@ -23,37 +27,25 @@ class Result(dict):
         self[attr] = value
 
     @staticmethod
-    def traverse(data_type_name, result, options, client):
-        if get(result, 'edges') is not None:
-            # Wrap a collection in a CollectionResult to give it pagination
-            # helpers.
-            return CollectionResult(data_type_name, result, options, client)
-        else:
-            # Otherwise traverse each field in the result and recursively wrap
-            # any that are collections.
-            return Result(data_type_name, result, options, client)
-
-    @staticmethod
-    def unwrap(data_type_name, result):
+    def build(data_type_name, result, options, client):
+        result = Result(result, {'include': {data_type_name: options}}, client)
         return result[data_type_name]
 
 
 class CollectionResult:
-    def __init__(self, data_type_name, result, options, client):
+    def __init__(self, result, options, client):
         self.__client = client
-        self.__data_type_name = data_type_name
+        self.__data_type_name = get(result, '__typename')
         self.__options = options
         self.__page_info = result['pageInfo']
 
         self.total_count = result['totalCount']
         self.data = []
         for edge in result['edges']:
-            self.data.append(
-                Result.traverse(
-                    data_type_name,
-                    edge['node'],
-                    get(options, f'include.{data_type_name}', {}),
-                    client))
+            self.data.append(Result(edge['node'], options, client))
+
+    def __data_type_to_paginate(self):
+        return camel_case(self.__data_type_name).replace('Connection', '')
 
     def previous_page(self):
         if not self.__page_info['hasPreviousPage']:
@@ -63,7 +55,7 @@ class CollectionResult:
             options.pop('after', None)
             options['before'] = self.__page_info['startCursor']
             return self.__client.find(
-                self.__data_type_name,
+                self.__data_type_to_paginate(),
                 options)
 
     def next_page(self):
@@ -74,5 +66,5 @@ class CollectionResult:
             options.pop('before', None)
             options['after'] = self.__page_info['endCursor']
             return self.__client.find(
-                self.__data_type_name,
+                self.__data_type_to_paginate(),
                 options)

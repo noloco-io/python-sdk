@@ -27,6 +27,7 @@ DATA_TYPE_COLLECTION_FIELDS = '''{data_type_name}{data_type_args} {{
       startCursor
       endCursor
     }}
+    __typename
   }}
 '''
 
@@ -131,7 +132,7 @@ class DataTypeFieldsBuilder:
 
         all_field_names = primary_field_schema + \
             related_field_schema + \
-            file_field_schema
+            file_field_schema + ['__typename']
 
         return '\n'.join(all_field_names)
 

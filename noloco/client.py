@@ -19,7 +19,9 @@ from noloco.utils import (
     flatten_args,
     gql_args,
     has_files)
-from pydash import get, pascal_case
+from pydash import (
+    get,
+    pascal_case)
 
 
 BASE_URL = 'https://api.nolocolocal.io'
@@ -234,44 +236,6 @@ class Noloco:
             Result.unwrap(data_type_name, raw_result),
             options,
             self)
-
-    def export_csv(
-            self,
-            data_type_name,
-            after=None,
-            before=None,
-            first=None,
-            order_by=None,
-            where=None):
-        """Exports the members of a collection meeting the criteria you
-            specified to a base64 string.
-
-        Args:
-            data_type_name: The name of the data type the collection is for.
-                For example 'user'.
-            after: The cursor to paginate results after.
-            before: The cursor to paginate results before.
-            first: The number of results to paginate to.
-            order_by: The order to sort results in. For example:
-
-                { 'direction': 'ASC', field: 'createdAt' }
-            where: The filter that you would like to apply to the collection.
-                For example:
-
-                { 'roleId': { 'equals': 2 } }
-
-        Returns:
-            The base64 encoded string result of querying the Noloco collection
-            and exporting it as a CSV.
-        """
-        args = annotate_collection_args(
-            data_type_name, after, before, first, order_by, where)
-
-        query = self.__query_builder \
-            .build_data_type_collection_csv_export_query(data_type_name, args)
-
-        return self.__project_client.execute(
-            gql(query), variable_values=gql_args(args))
 
     def find(self, data_type_name, options={}):
         """Searches a Noloco collection for records matching the provided

@@ -1,7 +1,5 @@
 from noloco.fields import DataTypeFieldsBuilder
-from noloco.utils import (
-  build_data_type_args,
-  build_operation_args)
+from noloco.utils import build_operation_args
 
 
 PROJECT_API_KEYS_QUERY = '''query ($projectId: String!) {
@@ -69,13 +67,6 @@ DATA_TYPE_QUERY = '''query{query_args} {{
 }}'''
 
 
-DATA_TYPE_COLLECTION_CSV_EXPORT_QUERY = '''query{query_args} {{
-  {data_type_name}CsvExport{data_type_args} {{
-    base64
-  }}
-}}'''
-
-
 DATA_TYPE_COLLECTION_QUERY = '''query{query_args} {{
   {data_type_collection_fragment}
 }}'''
@@ -84,18 +75,6 @@ DATA_TYPE_COLLECTION_QUERY = '''query{query_args} {{
 class QueryBuilder:
     def __init__(self):
         self.fields_builder = DataTypeFieldsBuilder()
-
-    def build_data_type_collection_csv_export_query(
-            self, data_type, flattened_options):
-        query_args = build_operation_args(flattened_options)
-        data_type_args = build_data_type_args(flattened_options)
-
-        query = DATA_TYPE_COLLECTION_CSV_EXPORT_QUERY.format(
-            query_args=query_args,
-            data_type_name=data_type['name'],
-            data_type_args=data_type_args)
-
-        return query
 
     def build_data_type_collection_query(
             self, data_type, data_types, options, flattened_options):

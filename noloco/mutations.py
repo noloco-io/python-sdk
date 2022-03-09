@@ -1,7 +1,14 @@
-from noloco.exceptions import NolocoFieldNotFoundError, NolocoUnknownError
+from noloco.exceptions import (
+    NolocoFieldNotFoundError,
+    NolocoUnknownError)
 from noloco.fields import DataTypeFieldsBuilder
-from noloco.utils import build_data_type_args, build_operation_args, gql_type
-from pydash import find, get, pascal_case
+from noloco.utils import (
+    build_operation_args,
+    gql_type)
+from pydash import (
+    find,
+    get,
+    pascal_case)
 
 
 DATA_TYPE_MUTATION = '''mutation{mutation_args} {{

@@ -1,4 +1,6 @@
-from noloco.constants import MANY_TO_ONE, ONE_TO_ONE
+from noloco.constants import (
+    MANY_TO_ONE,
+    ONE_TO_ONE)
 from noloco.mutations import MutationBuilder
 from unittest import TestCase
 

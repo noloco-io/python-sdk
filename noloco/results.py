@@ -1,18 +1,26 @@
 from pydash import get
 
 
-class Result:
+class Result(dict):
     def __init__(self, data_type_name, result, options, client):
         for key, value in result.items():
             if type(value) is dict:
                 key_options = get(options, f'include.{key}', {})
-                setattr(self, key, Result.traverse(
+                result[key] = Result.traverse(
                     value,
                     data_type_name,
                     key_options,
-                    client))
+                    client)
             else:
-                setattr(self, key, value)
+                result[key] = value
+
+        dict.__init__(self, result)
+
+    def __getattr__(self, attr):
+        return self[attr]
+
+    def __setattr__(self, attr, value):
+        self[attr] = value
 
     @staticmethod
     def traverse(data_type_name, result, options, client):

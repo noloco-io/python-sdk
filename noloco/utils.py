@@ -44,6 +44,8 @@ def annotate_collection_args(data_type, data_types, args):
                         relationship_data_type,
                         data_types,
                         nested_args)
+            else:
+                annotated_args['include'][nested_data_type_name] = True
 
     return annotated_args
 

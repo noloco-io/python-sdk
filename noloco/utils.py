@@ -5,9 +5,11 @@ from noloco.constants import (
     DURATION,
     INTEGER,
     TEXT)
-from noloco.exceptions import (
-    NolocoDataTypeNotFoundError)
-from pydash import find, get, pascal_case
+from noloco.exceptions import NolocoDataTypeNotFoundError
+from pydash import (
+    find,
+    get,
+    pascal_case)
 
 
 def annotate_collection_args(data_type, data_types, args):

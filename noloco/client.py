@@ -155,9 +155,8 @@ class Noloco:
 
         # Flatten the options.
         mutation_type = 'create'
-        flattened_options = flatten_args(
-            mutation_type + pascal_case(data_type_name),
-            typed_options)
+        mutation_name = mutation_type + pascal_case(data_type_name)
+        flattened_options = flatten_args(mutation_name, typed_options)
 
         # Build the mutation.
         mutation = self.__mutation_builder.build_data_type_mutation(
@@ -175,6 +174,7 @@ class Noloco:
 
         return Result.build(
             data_type_name,
+            mutation_name,
             raw_result,
             options,
             self.get)
@@ -197,7 +197,7 @@ class Noloco:
                 }
 
         Returns:
-            The record that was deleted from the Noloco collection.
+            None.
         """
         data_types = self.__get_data_types()
         data_type = find_data_type_by_name(data_type_name, data_types)
@@ -215,9 +215,8 @@ class Noloco:
 
         # Flatten the options.
         mutation_type = 'delete'
-        flattened_options = flatten_args(
-            mutation_type + pascal_case(data_type_name),
-            typed_options)
+        mutation_name = mutation_type + pascal_case(data_type_name)
+        flattened_options = flatten_args(mutation_name, typed_options)
 
         # Build the mutation.
         mutation = self.__mutation_builder.build_data_type_mutation(
@@ -231,11 +230,7 @@ class Noloco:
         raw_result = self.__project_client.execute(
             gql(mutation), variable_values=gql_args(flattened_options))
 
-        return Result.build(
-            data_type_name,
-            raw_result,
-            options,
-            self.get)
+        return raw_result[mutation_name]
 
     def find(self, data_type_name, options={}):
         """Searches a Noloco collection for records matching the provided
@@ -281,10 +276,8 @@ class Noloco:
             options)
 
         # Flatten the options.
-        flattened_options = flatten_args(
-            data_type_name + 'Collection',
-            typed_options)
-
+        query_name = data_type_name + 'Collection'
+        flattened_options = flatten_args(query_name, typed_options)
         # Build the query.
         query = self.__query_builder.build_data_type_collection_query(
             data_type, data_types, typed_options, flattened_options)
@@ -296,10 +289,10 @@ class Noloco:
 
         return Result.build(
             data_type_name,
+            query_name,
             raw_result,
             options,
-            self.find,
-            is_collection=True)
+            self.find)
 
     def get(self, data_type_name, options={}):
         """Fetches a record from a Noloco collection that you identify by any
@@ -353,6 +346,7 @@ class Noloco:
             gql(query), variable_values=gql_args(flattened_options))
 
         return Result.build(
+            data_type_name,
             data_type_name,
             raw_result,
             options,
@@ -420,9 +414,8 @@ class Noloco:
 
         # Flatten the options to be added to the top level of the mutation.
         mutation_type = 'update'
-        flattened_options = flatten_args(
-            mutation_type + pascal_case(data_type_name),
-            typed_options)
+        mutation_name = mutation_type + pascal_case(data_type_name)
+        flattened_options = flatten_args(mutation_name, typed_options)
 
         mutation = self.__mutation_builder.build_data_type_mutation(
             mutation_type,
@@ -438,6 +431,7 @@ class Noloco:
 
         return Result.build(
             data_type_name,
+            mutation_name,
             raw_result,
             options,
             self.get)

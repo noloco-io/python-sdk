@@ -205,3 +205,669 @@ class TestBuildResult(TestCase):
         self.assertEqual(2, result.data[1].id)
         self.assertEqual('yyyyyyyyyyyyyyyyyyyy', result.data[1].uuid)
         self.assertEqual('My Value B', result.data[1].myField)
+
+class TestPagingCollectionResult(TestCase):
+    def test_next_page_simple_collection_result(self):
+        options = {
+            'first': 1,
+            'where': {
+                'id': {
+                    'lt': 3
+                }
+            }
+        }
+        raw_curr_result = {
+            'myDataTypeCollection': {
+                'totalCount': 2,
+                'edges': [
+                    {
+                        'node': {
+                            'id': 1,
+                            'uuid': 'xxxxxxxxxxxxxxxxxxxx',
+                            'myField': 'My Value A'
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasPreviousPage': False,
+                    'hasNextPage': True,
+                    'startCursor': 'aaaaaaaaaaa=',
+                    'endCursor': 'bbbbbbbbbbb='
+                },
+                '__typename': 'MyDataTypeConnection'
+            }
+        }
+        raw_next_result = {
+            'myDataTypeCollection': {
+                'totalCount': 2,
+                'edges': [
+                    {
+                        'node': {
+                            'id': 2,
+                            'uuid': 'yyyyyyyyyyyyyyyyyyyy',
+                            'myField': 'My Value B'
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasPreviousPage': True,
+                    'hasNextPage': False,
+                    'startCursor': 'bbbbbbbbbbb=',
+                    'endCursor': 'ccccccccccc='
+                },
+                '__typename': 'MyDataTypeConnection'
+            }
+        }
+        def callback(data_type_name, paged_options):
+            # Parameter assertions
+            self.assertEqual('myDataType', data_type_name)
+            self.assertEqual({
+                'after': 'bbbbbbbbbbb=',
+                'first': 1,
+                'where': {
+                    'id': {
+                        'lt': 3
+                    }
+                }
+            }, paged_options)
+
+            return Result.build(
+                'myDataType',
+                'myDataTypeCollection',
+                raw_next_result,
+                paged_options,
+                lambda _: None)
+
+        result = Result.build(
+            'myDataType',
+            'myDataTypeCollection',
+            raw_curr_result,
+            options,
+            callback)
+
+        next_page_result = result.next_page()
+
+        # Total count assertions
+        self.assertEqual(2, next_page_result.total_count)
+
+        # Data assertions
+        self.assertEqual(1, len(next_page_result.data))
+        self.assertEqual(2, next_page_result.data[0].id)
+        self.assertEqual('yyyyyyyyyyyyyyyyyyyy', next_page_result.data[0].uuid)
+        self.assertEqual('My Value B', next_page_result.data[0].myField)
+
+    def test_previous_page_simple_collection_result(self):
+        options = {
+            'after': 'bbbbbbbbbbb=',
+            'first': 1,
+            'where': {
+                'id': {
+                    'lt': 3
+                }
+            }
+        }
+        raw_curr_result = {
+            'myDataTypeCollection': {
+                'totalCount': 2,
+                'edges': [
+                    {
+                        'node': {
+                            'id': 2,
+                            'uuid': 'yyyyyyyyyyyyyyyyyyyy',
+                            'myField': 'My Value B'
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasPreviousPage': True,
+                    'hasNextPage': False,
+                    'startCursor': 'bbbbbbbbbbb=',
+                    'endCursor': 'ccccccccccc='
+                },
+                '__typename': 'MyDataTypeConnection'
+            }
+        }
+        raw_prev_result = {
+            'myDataTypeCollection': {
+                'totalCount': 2,
+                'edges': [
+                    {
+                        'node': {
+                            'id': 1,
+                            'uuid': 'xxxxxxxxxxxxxxxxxxxx',
+                            'myField': 'My Value A'
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasPreviousPage': False,
+                    'hasNextPage': True,
+                    'startCursor': 'aaaaaaaaaaa=',
+                    'endCursor': 'bbbbbbbbbbb='
+                },
+                '__typename': 'MyDataTypeConnection'
+            }
+        }
+        def callback(data_type_name, paged_options):
+            # Parameter assertions
+            self.assertEqual('myDataType', data_type_name)
+            self.assertEqual({
+                'before': 'bbbbbbbbbbb=',
+                'first': 1,
+                'where': {
+                    'id': {
+                        'lt': 3
+                    }
+                }
+            }, paged_options)
+
+            return Result.build(
+                'myDataType',
+                'myDataTypeCollection',
+                raw_prev_result,
+                paged_options,
+                lambda _: None)
+
+        result = Result.build(
+            'myDataType',
+            'myDataTypeCollection',
+            raw_curr_result,
+            options,
+            callback)
+
+        prev_page_result = result.previous_page()
+
+        # Total count assertions
+        self.assertEqual(2, prev_page_result.total_count)
+
+        # Data assertions
+        self.assertEqual(1, len(prev_page_result.data))
+        self.assertEqual(1, prev_page_result.data[0].id)
+        self.assertEqual('xxxxxxxxxxxxxxxxxxxx', prev_page_result.data[0].uuid)
+        self.assertEqual('My Value A', prev_page_result.data[0].myField)
+
+    def test_next_page_simple_result_nested_collection(self):
+        options = {
+            'include': {
+                'myDataTypeCollection': {
+                    'first': 1
+                }
+            },
+            'where': {
+                'id': {
+                    'equals': 1
+                }
+            }
+        }
+        raw_curr_result = {
+            'myDataType': {
+                'myDataTypeCollection': {
+                    'totalCount': 2,
+                    'edges': [
+                        {
+                            'node': {
+                                'id': 1,
+                                'uuid': 'xxxxxxxxxxxxxxxxxxxx',
+                                'myField': 'My Value A'
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasPreviousPage': False,
+                        'hasNextPage': True,
+                        'startCursor': 'aaaaaaaaaaa=',
+                        'endCursor': 'bbbbbbbbbbb='
+                    },
+                    '__typename': 'MyDataTypeConnection'
+                }
+            }
+        }
+        raw_next_result = {
+            'myDataType': {
+                'myDataTypeCollection': {
+                    'totalCount': 2,
+                    'edges': [
+                        {
+                            'node': {
+                                'id': 2,
+                                'uuid': 'yyyyyyyyyyyyyyyyyyyy',
+                                'myField': 'My Value B'
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasPreviousPage': True,
+                        'hasNextPage': False,
+                        'startCursor': 'bbbbbbbbbbb=',
+                        'endCursor': 'ccccccccccc='
+                    },
+                    '__typename': 'MyDataTypeConnection'
+                }
+            }
+        }
+        def callback(data_type_name, paged_options):
+            # Parameter assertions
+            self.assertEqual('myDataType', data_type_name)
+            self.assertEqual({
+                'include': {
+                    'myDataTypeCollection': {
+                        'after': 'bbbbbbbbbbb=',
+                        'first': 1
+                    }
+                },
+                'where': {
+                    'id': {
+                        'equals': 1
+                    }
+                }
+            }, paged_options)
+
+            return Result.build(
+                'myDataType',
+                'myDataType',
+                raw_next_result,
+                paged_options,
+                lambda _: None)
+
+        result = Result.build(
+            'myDataType',
+            'myDataType',
+            raw_curr_result,
+            options,
+            callback)
+
+        next_page_result = result.myDataTypeCollection.next_page()
+
+        # Total count assertions
+        self.assertEqual(2, next_page_result.total_count)
+
+        # Data assertions
+        self.assertEqual(1, len(next_page_result.data))
+        self.assertEqual(2, next_page_result.data[0].id)
+        self.assertEqual('yyyyyyyyyyyyyyyyyyyy', next_page_result.data[0].uuid)
+        self.assertEqual('My Value B', next_page_result.data[0].myField)
+
+    def test_previous_page_simple_result_nested_collection(self):
+        options = {
+            'include': {
+                'myDataTypeCollection': {
+                    'after': 'bbbbbbbbbbb=',
+                    'first': 1
+                }
+            },
+            'where': {
+                'id': {
+                    'equals': 1
+                }
+            }
+        }
+        raw_curr_result = {
+            'myDataType': {
+                'myDataTypeCollection': {
+                    'totalCount': 2,
+                    'edges': [
+                        {
+                            'node': {
+                                'id': 2,
+                                'uuid': 'yyyyyyyyyyyyyyyyyyyy',
+                                'myField': 'My Value B'
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasPreviousPage': True,
+                        'hasNextPage': False,
+                        'startCursor': 'bbbbbbbbbbb=',
+                        'endCursor': 'ccccccccccc='
+                    },
+                    '__typename': 'MyDataTypeConnection'
+                }
+            }
+        }
+        raw_prev_result = {
+            'myDataType': {
+                'myDataTypeCollection': {
+                    'totalCount': 2,
+                    'edges': [
+                        {
+                            'node': {
+                                'id': 1,
+                                'uuid': 'xxxxxxxxxxxxxxxxxxxx',
+                                'myField': 'My Value A'
+                            }
+                        }
+                    ],
+                    'pageInfo': {
+                        'hasPreviousPage': False,
+                        'hasNextPage': True,
+                        'startCursor': 'aaaaaaaaaaa=',
+                        'endCursor': 'bbbbbbbbbbb='
+                    },
+                    '__typename': 'MyDataTypeConnection'
+                }
+            }
+        }
+        def callback(data_type_name, paged_options):
+            # Parameter assertions
+            self.assertEqual('myDataType', data_type_name)
+            self.assertEqual({
+                'include': {
+                    'myDataTypeCollection': {
+                        'before': 'bbbbbbbbbbb=',
+                        'first': 1
+                    }
+                },
+                'where': {
+                    'id': {
+                        'equals': 1
+                    }
+                }
+            }, paged_options)
+
+            return Result.build(
+                'myDataType',
+                'myDataType',
+                raw_prev_result,
+                paged_options,
+                lambda _: None)
+
+        result = Result.build(
+            'myDataType',
+            'myDataType',
+            raw_curr_result,
+            options,
+            callback)
+
+        prev_page_result = result.myDataTypeCollection.previous_page()
+
+        # Total count assertions
+        self.assertEqual(2, prev_page_result.total_count)
+
+        # Data assertions
+        self.assertEqual(1, len(prev_page_result.data))
+        self.assertEqual(1, prev_page_result.data[0].id)
+        self.assertEqual('xxxxxxxxxxxxxxxxxxxx', prev_page_result.data[0].uuid)
+        self.assertEqual('My Value A', prev_page_result.data[0].myField)
+
+    def test_next_page_collection_result_nested_collection(self):
+        options = {
+            'include': {
+                'myWrapperDataType': {
+                    'include': {
+                        'myNestedDataTypeCollection': {
+                            'first': 1
+                        }
+                    }
+                }
+            },
+            'where': {
+                'id': {
+                    'equals': 1
+                }
+            }
+        }
+        raw_curr_result = {
+            'myDataTypeCollection': {
+                'totalCount': 10,
+                'edges': [
+                    {
+                        'node': {
+                            'myWrapperDataType': {
+                                'myNestedDataTypeCollection': {
+                                    'totalCount': 2,
+                                    'edges': [
+                                        {
+                                            'node': {
+                                                'id': 1,
+                                                'uuid': 'xxxxxxxxxxxxxxxxxxxx',
+                                                'myField': 'My Value A'
+                                            }
+                                        }
+                                    ],
+                                    'pageInfo': {
+                                        'hasPreviousPage': False,
+                                        'hasNextPage': True,
+                                        'startCursor': 'ccccccccccc=',
+                                        'endCursor': 'ddddddddddd='
+                                    },
+                                    '__typename': 'MyNestedDataTypeConnection'
+                                }
+                            }
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasPreviousPage': False,
+                    'hasNextPage': True,
+                    'startCursor': 'aaaaaaaaaaa=',
+                    'endCursor': 'bbbbbbbbbbb='
+                },
+                '__typename': 'MyDataTypeConnection'
+            }
+        }
+        raw_next_result = {
+            'myDataTypeCollection': {
+                'totalCount': 10,
+                'edges': [
+                    {
+                        'node': {
+                            'myWrapperDataType': {
+                                'myNestedDataTypeCollection': {
+                                    'totalCount': 2,
+                                    'edges': [
+                                        {
+                                            'node': {
+                                                'id': 2,
+                                                'uuid': 'yyyyyyyyyyyyyyyyyyyy',
+                                                'myField': 'My Value B'
+                                            }
+                                        }
+                                    ],
+                                    'pageInfo': {
+                                        'hasPreviousPage': True,
+                                        'hasNextPage': False,
+                                        'startCursor': 'ddddddddddd=',
+                                        'endCursor': 'eeeeeeeeeee='
+                                    },
+                                    '__typename': 'MyNestedDataTypeConnection'
+                                }
+                            }
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasPreviousPage': False,
+                    'hasNextPage': True,
+                    'startCursor': 'aaaaaaaaaaa=',
+                    'endCursor': 'bbbbbbbbbbb='
+                },
+                '__typename': 'MyDataTypeConnection'
+            }
+        }
+        def callback(data_type_name, paged_options):
+            # Parameter assertions
+            self.assertEqual('myDataType', data_type_name)
+            self.assertEqual({
+                'include': {
+                    'myWrapperDataType': {
+                        'include': {
+                            'myNestedDataTypeCollection': {
+                                'after': 'ddddddddddd=',
+                                'first': 1
+                            }
+                        }
+                    }
+                },
+                'where': {
+                    'id': {
+                        'equals': 1
+                    }
+                }
+            }, paged_options)
+
+            return Result.build(
+                'myDataType',
+                'myDataTypeCollection',
+                raw_next_result,
+                paged_options,
+                lambda _: None)
+
+        result = Result.build(
+            'myDataType',
+            'myDataTypeCollection',
+            raw_curr_result,
+            options,
+            callback)
+
+        next_page_result = result.data[0].myWrapperDataType.myNestedDataTypeCollection.next_page()
+
+        # Total count assertions
+        self.assertEqual(2, next_page_result.total_count)
+
+        # Data assertions
+        self.assertEqual(1, len(next_page_result.data))
+        self.assertEqual(2, next_page_result.data[0].id)
+        self.assertEqual('yyyyyyyyyyyyyyyyyyyy', next_page_result.data[0].uuid)
+        self.assertEqual('My Value B', next_page_result.data[0].myField)
+
+    def test_previous_page_collection_result_nested_collection(self):
+        options = {
+            'include': {
+                'myWrapperDataType': {
+                    'include': {
+                        'myNestedDataTypeCollection': {
+                            'after': 'ddddddddddd=',
+                            'first': 1
+                        }
+                    }
+                }
+            },
+            'where': {
+                'id': {
+                    'equals': 1
+                }
+            }
+        }
+        raw_curr_result = {
+            'myDataTypeCollection': {
+                'totalCount': 10,
+                'edges': [
+                    {
+                        'node': {
+                            'myWrapperDataType': {
+                                'myNestedDataTypeCollection': {
+                                    'totalCount': 2,
+                                    'edges': [
+                                        {
+                                            'node': {
+                                                'id': 2,
+                                                'uuid': 'yyyyyyyyyyyyyyyyyyyy',
+                                                'myField': 'My Value B'
+                                            }
+                                        }
+                                    ],
+                                    'pageInfo': {
+                                        'hasPreviousPage': True,
+                                        'hasNextPage': False,
+                                        'startCursor': 'ddddddddddd=',
+                                        'endCursor': 'eeeeeeeeeee='
+                                    },
+                                    '__typename': 'MyNestedDataTypeConnection'
+                                }
+                            }
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasPreviousPage': False,
+                    'hasNextPage': True,
+                    'startCursor': 'aaaaaaaaaaa=',
+                    'endCursor': 'bbbbbbbbbbb='
+                },
+                '__typename': 'MyDataTypeConnection'
+            }
+        }
+        raw_prev_result = {
+            'myDataTypeCollection': {
+                'totalCount': 10,
+                'edges': [
+                    {
+                        'node': {
+                            'myWrapperDataType': {
+                                'myNestedDataTypeCollection': {
+                                    'totalCount': 2,
+                                    'edges': [
+                                        {
+                                            'node': {
+                                                'id': 1,
+                                                'uuid': 'xxxxxxxxxxxxxxxxxxxx',
+                                                'myField': 'My Value A'
+                                            }
+                                        }
+                                    ],
+                                    'pageInfo': {
+                                        'hasPreviousPage': False,
+                                        'hasNextPage': True,
+                                        'startCursor': 'ccccccccccc=',
+                                        'endCursor': 'ddddddddddd='
+                                    },
+                                    '__typename': 'MyNestedDataTypeConnection'
+                                }
+                            }
+                        }
+                    }
+                ],
+                'pageInfo': {
+                    'hasPreviousPage': False,
+                    'hasNextPage': True,
+                    'startCursor': 'aaaaaaaaaaa=',
+                    'endCursor': 'bbbbbbbbbbb='
+                },
+                '__typename': 'MyDataTypeConnection'
+            }
+        }
+        def callback(data_type_name, paged_options):
+            # Parameter assertions
+            self.assertEqual('myDataType', data_type_name)
+            self.assertEqual({
+                'include': {
+                    'myWrapperDataType': {
+                        'include': {
+                            'myNestedDataTypeCollection': {
+                                'before': 'ddddddddddd=',
+                                'first': 1
+                            }
+                        }
+                    }
+                },
+                'where': {
+                    'id': {
+                        'equals': 1
+                    }
+                }
+            }, paged_options)
+
+            return Result.build(
+                'myDataType',
+                'myDataTypeCollection',
+                raw_prev_result,
+                paged_options,
+                lambda _: None)
+
+        result = Result.build(
+            'myDataType',
+            'myDataTypeCollection',
+            raw_curr_result,
+            options,
+            callback)
+
+        prev_page_result = result.data[0].myWrapperDataType.myNestedDataTypeCollection.previous_page()
+
+        # Total count assertions
+        self.assertEqual(2, prev_page_result.total_count)
+
+        # Data assertions
+        self.assertEqual(1, len(prev_page_result.data))
+        self.assertEqual(1, prev_page_result.data[0].id)
+        self.assertEqual('xxxxxxxxxxxxxxxxxxxx', prev_page_result.data[0].uuid)
+        self.assertEqual('My Value A', prev_page_result.data[0].myField)

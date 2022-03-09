@@ -173,9 +173,9 @@ class Noloco:
             variable_values=gql_args(flattened_options),
             upload_files=has_files(mutation_args))
 
-        return Result.traverse(
+        return Result.build(
             data_type_name,
-            Result.unwrap(data_type_name, raw_result),
+            raw_result,
             options,
             self)
 
@@ -231,9 +231,9 @@ class Noloco:
         raw_result = self.__project_client.execute(
             gql(mutation), variable_values=gql_args(flattened_options))
 
-        return Result.traverse(
+        return Result.build(
             data_type_name,
-            Result.unwrap(data_type_name, raw_result),
+            raw_result,
             options,
             self)
 
@@ -294,9 +294,9 @@ class Noloco:
             gql(query),
             variable_values=gql_args(flattened_options))
 
-        return Result.traverse(
-            data_type_name,
-            Result.unwrap(data_type_name + 'Collection', raw_result),
+        return Result.build(
+            data_type_name + 'Collection',
+            raw_result,
             options,
             self)
 
@@ -351,9 +351,9 @@ class Noloco:
         raw_result = self.__project_client.execute(
             gql(query), variable_values=gql_args(flattened_options))
 
-        return Result.traverse(
+        return Result.build(
             data_type_name,
-            Result.unwrap(data_type_name, raw_result),
+            raw_result,
             options,
             self)
 
@@ -435,8 +435,8 @@ class Noloco:
             variable_values=gql_args(flattened_options),
             upload_files=has_files(mutation_args))
 
-        return Result.traverse(
+        return Result.build(
             data_type_name,
-            Result.unwrap(data_type_name, raw_result),
+            raw_result,
             options,
             self)

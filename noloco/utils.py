@@ -11,22 +11,25 @@ from pydash import find, get, pascal_case
 
 
 def annotate_collection_args(data_type, data_types, args):
+    annotated_args = {}
+
     # Process top-level supported parameters.
     if get(args, 'after') is not None:
-        args['after'] = {'type': 'String', 'value': args['after']}
-        args.pop('before', None)
+        annotated_args['after'] = {'type': 'String', 'value': args['after']}
     if get(args, 'after') is None and get(args, 'before') is not None:
-        args['before'] = {'type': 'String', 'value': args['before']}
+        annotated_args['before'] = {'type': 'String', 'value': args['before']}
     if get(args, 'first') is not None:
-        args['first'] = {'type': 'Int', 'value': args['first']}
+        annotated_args['first'] = {'type': 'Int', 'value': args['first']}
     if get(args, 'order_by') is not None:
-        args['order_by'] = {'type': 'OrderBy', 'value': args['order_by']}
+        annotated_args['orderBy'] = {'type': 'OrderBy', 'value': args['order_by']}
     if get(args, 'where') is not None:
         whereType = pascal_case(data_type['name']) + 'WhereInput'
-        args['where'] = {'type': whereType, 'value': args['where']}
+        annotated_args['where'] = {'type': whereType, 'value': args['where']}
 
     # Recursively process nested supported parameters.
     if get(args, 'include') is not None:
+        annotated_args['include'] = {}
+
         for nested_data_type_name, nested_args in args['include'].items():
             if nested_args is not True:
                 relationship_data_type = find_relationship_data_type(
@@ -34,13 +37,13 @@ def annotate_collection_args(data_type, data_types, args):
                     data_type['name'],
                     data_type['fields'],
                     data_types)
-                args['include'][nested_data_type_name] = \
+                annotated_args['include'][nested_data_type_name] = \
                     annotate_collection_args(
                         relationship_data_type,
                         data_types,
                         nested_args)
 
-    return args
+    return annotated_args
 
 
 def build_operation_arg(arg_name, arg_value):

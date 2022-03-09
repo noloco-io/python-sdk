@@ -2,6 +2,18 @@ from pydash import get
 
 
 class Result:
+    def __init__(self, data_type_name, result, options, client):
+        for key, value in result.items():
+            if type(value) is dict:
+                key_options = get(options, f'include.{key}', {})
+                setattr(self, key, Result.traverse(
+                    value,
+                    data_type_name,
+                    key_options,
+                    client))
+            else:
+                setattr(self, key, value)
+
     @staticmethod
     def traverse(data_type_name, result, options, client):
         if get(result, 'edges') is not None:
@@ -11,15 +23,7 @@ class Result:
         else:
             # Otherwise traverse each field in the result and recursively wrap
             # any that are collections.
-            for key, value in result.items():
-                if type(value) is dict:
-                    key_options = get(options, f'include.{key}', {})
-                    result[key] = Result.traverse(
-                        value,
-                        data_type_name,
-                        key_options,
-                        client)
-            return result
+            return Result(data_type_name, result, options, client)
 
     @staticmethod
     def unwrap(data_type_name, result):

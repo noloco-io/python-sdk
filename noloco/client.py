@@ -177,7 +177,7 @@ class Noloco:
             data_type_name,
             raw_result,
             options,
-            self)
+            self.get)
 
     def delete(self, data_type_name, options={}):
         """Deletes a record from a Noloco collection.
@@ -235,7 +235,7 @@ class Noloco:
             data_type_name,
             raw_result,
             options,
-            self)
+            self.get)
 
     def find(self, data_type_name, options={}):
         """Searches a Noloco collection for records matching the provided
@@ -295,10 +295,11 @@ class Noloco:
             variable_values=gql_args(flattened_options))
 
         return Result.build(
-            data_type_name + 'Collection',
+            data_type_name,
             raw_result,
             options,
-            self)
+            self.find,
+            is_collection=True)
 
     def get(self, data_type_name, options={}):
         """Fetches a record from a Noloco collection that you identify by any
@@ -355,7 +356,7 @@ class Noloco:
             data_type_name,
             raw_result,
             options,
-            self)
+            self.get)
 
     def update(self, data_type_name, value, options={}):
         """Updates a record in a collection.
@@ -439,4 +440,4 @@ class Noloco:
             data_type_name,
             raw_result,
             options,
-            self)
+            self.get)

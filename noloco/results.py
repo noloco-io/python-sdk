@@ -19,6 +19,9 @@ class Result(dict):
     def __getattr__(self, attr):
         return self[attr]
 
+    def __setattr__(self, attr, value):
+        self[attr] = value
+
     @staticmethod
     def traverse(data_type_name, result, options, client):
         if get(result, 'edges') is not None:

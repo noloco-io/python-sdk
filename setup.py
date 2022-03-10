@@ -7,10 +7,10 @@ setup(
     name='Noloco',
     version='0.1.0',
     description='Noloco Python SDK',
-    long_description='',  # TODO - write downstream-friendly README
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     author='Noloco',
     author_email='team@noloco.io',
-    url='https://github.com/noloco/python-sdk',
     license='',  # TODO - write LICENSE
     packages=find_packages(exclude=('docs', 'tests'))
 )

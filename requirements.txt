@@ -5,3 +5,4 @@ gql[all]
 pycodestyle
 pydash
 sphinx
+twine

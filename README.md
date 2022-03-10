@@ -33,7 +33,7 @@ The book collection will have the following schema:
 }
 ```
 
-### Pre-requisites
+### Pre-requisites
 
 You will need to know your account API key before you can use the SDK. To find this:
 - Open your project dashboard
@@ -48,7 +48,7 @@ You will also need to know your project name. If you access your site via the No
 - Find the Production subdomain
 - This will be [project-name].noloco.co
 
-### Building a client
+### Building a client
 
 A client is provided in the SDK through which you can carry out CRUD operations on your collections. You can construct an instance of this client as follows:
 
@@ -62,7 +62,7 @@ project_name = ...
 client = Noloco(account_api_key, project_name)
 ```
 
-### Creating a record in a collection
+### Creating a record in a collection
 
 To create a new author and then create a new book linked to them you would write the following code:
 
@@ -124,7 +124,7 @@ $ print(book)
 }
 ```
 
-## Reading a single record from a collection
+### Reading a single record from a collection
 
 If you know the value of a unique field of a record in a collection then you can read it from the collection:
 
@@ -149,7 +149,7 @@ $ print(book.author.firstName)
 Jane
 ```
 
-## Reading multiple records from a collection
+### Reading multiple records from a collection
 
 If you do not know the value of a unique field, or you just want to read multiple fields at once then you can do so:
 
@@ -214,7 +214,7 @@ $ print(book_collection.next_page().previous_page().data)
 ]
 ```
 
-## Updating a record in a collection
+### Updating a record in a collection
 
 If you know the value of a unique field of a record in a collection then you can update it in the collection:
 
@@ -240,7 +240,7 @@ $ print(book)
 }
 ```
 
-# Deleting a record from a collection
+### Deleting a record from a collection
 
 Finally, if you know the value of a unique field of a record in a collection then you can delete it from the collection:
 

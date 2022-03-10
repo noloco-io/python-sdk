@@ -160,7 +160,7 @@ book_collection = client.find('book', {
             'lt': 250
         }
     },
-    'first': '5',
+    'first': 5,
     'order_by': {
         'direction': 'ASC',
         'field': 'id'

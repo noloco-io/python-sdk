@@ -19,7 +19,7 @@ jobs:
         python-version: '3.x'
     - name: install package manager
       run: |
-        python -m pip3 install --upgrade pip
+        python -m pip install --upgrade pip
     - name: install dependencies
       run: |
         pip3 install -r requirements.txt

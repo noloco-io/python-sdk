@@ -1,0 +1,28 @@
+name: run tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: setup python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+    - name: install package manager
+      run: |
+        python -m pip3 install --upgrade pip3
+    - name: install dependencies
+      run |
+        pip3 install -r requirements.txt
+    - name: run tests
+      run: |
+        make tests

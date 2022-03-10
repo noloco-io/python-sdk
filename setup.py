@@ -13,5 +13,6 @@ setup(
     author_email='engineering@noloco.io',
     license='MIT',
     packages=find_packages(exclude=('docs', 'tests')),
+    include_package_data=True,
     install_requires=['gql[all]', 'pydash']
 )

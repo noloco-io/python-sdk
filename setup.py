@@ -12,6 +12,6 @@ setup(
     author='Noloco',
     author_email='team@noloco.io',
     license='',  # TODO - write LICENSE
-    packages=find_packages(exclude=('docs', 'tests'))
+    packages=find_packages(exclude=('docs', 'tests')),
     install_requires=['gql[all]', 'pydash']
 )

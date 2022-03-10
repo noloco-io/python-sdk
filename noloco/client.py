@@ -24,7 +24,7 @@ from pydash import (
     pascal_case)
 
 
-BASE_URL = 'https://api.nolocolocal.io'
+BASE_URL = 'https://api.portals.noloco.io'
 
 
 class Noloco:

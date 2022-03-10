@@ -6,3 +6,4 @@ pycodestyle
 pydash
 sphinx
 twine
+wheel

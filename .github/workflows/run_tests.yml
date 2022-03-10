@@ -21,7 +21,7 @@ jobs:
       run: |
         python -m pip3 install --upgrade pip3
     - name: install dependencies
-      run |
+      run: |
         pip3 install -r requirements.txt
     - name: run tests
       run: |

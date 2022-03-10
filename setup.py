@@ -11,7 +11,8 @@ setup(
     long_description_content_type='text/markdown',
     author='Noloco',
     author_email='engineering@noloco.io',
-    license='',  # TODO - write LICENSE
+    license='MIT',
     packages=find_packages(exclude=('docs', 'tests')),
+    include_package_data=True,
     install_requires=['gql[all]', 'pydash']
 )

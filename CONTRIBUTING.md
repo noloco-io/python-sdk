@@ -36,6 +36,35 @@ When you are done working on this project you should exit the virtual environmen
 
 The SDK is packaged up and distributed on PyPI via `pip`. Right now this process is manual.
 
+Before starting the release proccess, make sure you are in your virtual environment and all dependencies are installed.
+
+Then use `bumpversion` to automatically increment the version number by the part that you want to change.
+
 ```
-$ bumpversion --current-version [current.version.number] [major|minor|patch] setup.py noloco/__init__.py
+$ bumpversion [major|minor|patch]
+```
+
+Now you can build and verify the artifacts that will be uploaded to PyPI.
+
+```
+$ python setup.py sdist bdist_wheel
+$ twine check dist/*
+```
+
+Upload these to TestPyPI and verify that everything looks OK.
+
+```
+$ twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+```
+
+Finally upload the package to production PyPI.
+
+```
+$ twine upload dist/*
+```
+
+You should now be able to get the new version via `pip3`!
+
+```
+$ pip3 install noloco
 ```

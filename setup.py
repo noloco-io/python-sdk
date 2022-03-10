@@ -10,7 +10,7 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     author='Noloco',
-    author_email='team@noloco.io',
+    author_email='engineering@noloco.io',
     license='',  # TODO - write LICENSE
     packages=find_packages(exclude=('docs', 'tests')),
     install_requires=['gql[all]', 'pydash']

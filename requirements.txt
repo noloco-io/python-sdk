@@ -1,6 +1,9 @@
 autopep8
+bumpversion
 coverage
 gql[all]
 pycodestyle
 pydash
 sphinx
+twine
+wheel

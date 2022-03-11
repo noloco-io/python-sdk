@@ -2,7 +2,7 @@ from noloco.fields import DataTypeFieldsBuilder
 from noloco.utils import build_operation_args
 
 
-PROJECT_API_KEYS_QUERY = '''query ($projectId: String!) {
+PROJECT_DOCUMENT_QUERY = '''query ($projectId: String!) {
   project(projectId: $projectId) {
     id
     name
@@ -11,15 +11,6 @@ PROJECT_API_KEYS_QUERY = '''query ($projectId: String!) {
       project
       __typename
     }
-    __typename
-  }
-}'''
-
-
-PROJECT_DATA_TYPES_QUERY = '''query ($projectId: String!) {
-  project(projectId: $projectId) {
-    id
-    name
     dataTypes {
       id
       name

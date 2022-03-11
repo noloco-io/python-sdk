@@ -62,6 +62,8 @@ project_name = ...
 client = Noloco(account_api_key, project_name)
 ```
 
+This construction step might take a few seconds to run. The `Noloco.__init__` method is going to do a few things. Firstly it will use your account API key to lookup your project document, it will then find your project API key from this document and validate it with Noloco. Assuming this is all OK we will cache the data types that exist on your project at the time you constructed your client. If you alter the schema of any data types in your portal, you will need to construct a new client or call `client.refresh_project()`.
+
 ### Creating a record in a collection
 
 To create a new author and then create a new book linked to them you would write the following code:

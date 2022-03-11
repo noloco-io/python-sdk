@@ -7,8 +7,7 @@ from noloco.exceptions import (
     NolocoUnknownError)
 from noloco.mutations import MutationBuilder
 from noloco.queries import (
-    PROJECT_API_KEYS_QUERY,
-    PROJECT_DATA_TYPES_QUERY,
+    PROJECT_DOCUMENT_QUERY,
     QueryBuilder,
     VALIDATE_API_KEYS_QUERY)
 from noloco.results import Result
@@ -48,26 +47,37 @@ class Noloco:
         self.__mutation_builder = MutationBuilder()
         self.__query_builder = QueryBuilder()
 
+        # Build the account client that will be used to interact with the
+        # project document.
         account_transport = AIOHTTPTransport(
             url=BASE_URL, headers={'Authorization': account_api_key})
         self.__account_client = Client(
             transport=account_transport,
             fetch_schema_from_transport=True)
 
+        # Fetch the project document, lookup and validate the project API key
+        # and cache the data types locally.
+        self.refresh_project()
+
+    def refresh_project(self):
+        # Try to validate the account API key and fetch the project API key.
         try:
-            project_api_keys_query_result = self.__account_client.execute(
-                gql(PROJECT_API_KEYS_QUERY),
-                variable_values={'projectId': portal_name})
+            project_document_query_result = self.__account_client.execute(
+                gql(PROJECT_DOCUMENT_QUERY),
+                variable_values={'projectId': self.__project_name})
             project_api_key = get(
-                project_api_keys_query_result,
+                project_document_query_result,
                 'project.apiKeys.project')
             self.__project_id = get(
-                project_api_keys_query_result, 'project.id')
+                project_document_query_result, 'project.id')
+            self.__project_data_types = get(
+                self.project_document_query_result, 'project.dataTypes')
         except TransportQueryError as err:
             raise NolocoAccountApiKeyError(self.__project_name, err)
         except Exception as err:
             raise NolocoUnknownError(err)
 
+        # Try to validate the project API key.
         try:
             validate_api_keys_query_result = self.__account_client.execute(
                 gql(VALIDATE_API_KEYS_QUERY),
@@ -80,22 +90,14 @@ class Noloco:
         except Exception as err:
             raise NolocoUnknownError(err)
 
+        # Build the project client that will be used to interact with
+        # collections.
         project_transport = AIOHTTPTransport(
             url=f'{BASE_URL}/data/{self.__project_name}',
             headers={'Authorization': project_api_key})
         self.__project_client = Client(
             transport=project_transport,
             fetch_schema_from_transport=True)
-
-    def __get_data_types(self):
-        project_with_data_types = self.__account_client.execute(
-            gql(PROJECT_DATA_TYPES_QUERY),
-            variable_values={'projectId': self.__project_name})
-
-        project_data_types = get(
-            project_with_data_types, 'project.dataTypes')
-
-        return project_data_types
 
     def create(self, data_type_name, value, options={}):
         """Creates a record in a Noloco collection.
@@ -134,7 +136,7 @@ class Noloco:
         Returns:
             The record that was created in the Noloco collection.
         """
-        data_types = self.__get_data_types()
+        data_types = self.__project_data_types
         data_type = find_data_type_by_name(data_type_name, data_types)
 
         # Based on the value provided to update, derive the arguments that will
@@ -199,7 +201,7 @@ class Noloco:
         Returns:
             None.
         """
-        data_types = self.__get_data_types()
+        data_types = self.__project_data_types
         data_type = find_data_type_by_name(data_type_name, data_types)
 
         # Based on the options provided, derive the response options and
@@ -265,7 +267,7 @@ class Noloco:
         Returns:
             The result of querying the Noloco collection.
         """
-        data_types = self.__get_data_types()
+        data_types = self.__project_data_types
         data_type = find_data_type_by_name(data_type_name, data_types)
 
         # Based on the options provided, derive the search and response
@@ -321,7 +323,7 @@ class Noloco:
         Returns:
             The result of looking up the Noloco record.
         """
-        data_types = self.__get_data_types()
+        data_types = self.__project_data_types
         data_type = find_data_type_by_name(data_type_name, data_types)
 
         # Based on the options provided, derive the response options and
@@ -388,7 +390,7 @@ class Noloco:
         Returns:
             The result of updating the Noloco record.
         """
-        data_types = self.__get_data_types()
+        data_types = self.__project_data_types
         data_type = find_data_type_by_name(data_type_name, data_types)
 
         # Based on the value provided to update, derive the arguments that will

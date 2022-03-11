@@ -78,6 +78,7 @@ class Noloco:
             .with_options(options) \
             .mutate('create') \
             .value(value) \
+            .with_pagination_callback(self.get) \
             .build() \
             .execute()
 
@@ -146,6 +147,7 @@ class Noloco:
             .for_data_type(data_type_name) \
             .with_options(options) \
             .query('find') \
+            .with_pagination_callback(self.find) \
             .build() \
             .execute()
 
@@ -181,6 +183,7 @@ class Noloco:
             .with_options(options) \
             .query('get') \
             .with_lookup() \
+            .with_pagination_callback(self.get) \
             .build() \
             .execute()
 
@@ -226,5 +229,6 @@ class Noloco:
             .mutate('update') \
             .with_lookup('ID!') \
             .value(value) \
+            .with_pagination_callback(self.get) \
             .build() \
             .execute()

@@ -2,7 +2,6 @@ from gql import Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from noloco.project import Project
 from noloco.requests import Command
-from noloco.results import Result
 
 
 BASE_URL = 'https://api.portals.noloco.io'
@@ -224,8 +223,8 @@ class Noloco:
         return Command(self.__project) \
             .for_data_type(data_type_name) \
             .with_options(options) \
-            .mutate('create') \
+            .mutate('update') \
             .with_lookup('ID!') \
-            .withValue(value) \
+            .value(value) \
             .build() \
             .execute()

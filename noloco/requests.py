@@ -1,5 +1,6 @@
 from gql import gql
 from gql.transport.exceptions import TransportQueryError
+from noloco.constants import GRAPHQL_VALIDATION_FAILED
 from noloco.exceptions import (
     NolocoDataTypeNotFoundError,
     NolocoFieldNotFoundError)
@@ -14,7 +15,9 @@ from noloco.utils import (
     gql_args,
     has_files,
     result_name_suffix)
-from pydash import pascal_case
+from pydash import (
+    get,
+    pascal_case)
 
 
 class Command:
@@ -23,12 +26,22 @@ class Command:
         self.__mutation_builder = MutationBuilder()
         self.__query_builder = QueryBuilder()
 
+        self.data_type_name = None
+        self.lookup_id_type = None
+        self.mutation = None
+        self.new_value = None
+        self.options = None
+        self.pagination_callback = None
+        self.query_type = None
+        self.result_name = None
+
     def for_data_type(self, data_type_name):
         self.data_type_name = data_type_name
         return self
 
     def with_lookup(self, lookup_id_type='ID'):
         self.lookup_id_type = lookup_id_type
+        return self
 
     def with_options(self, options):
         self.options = options
@@ -38,8 +51,8 @@ class Command:
         self.pagination_callback = pagination_callback
         return self
 
-    def value(self, value):
-        self.value = value
+    def value(self, new_value):
+        self.new_value = new_value
         return self
 
     def mutate(self, mutation):
@@ -47,9 +60,9 @@ class Command:
         self.result_name = mutation + pascal_case(self.data_type_name)
         return self
 
-    def query(self, query):
-        self.query = query
-        self.result_name = self.data_type_name + result_name_suffix(query)
+    def query(self, query_type):
+        self.query_type = query_type
+        self.result_name = self.data_type_name + result_name_suffix(query_type)
         return self
 
     def build(self, retry=True):
@@ -68,13 +81,13 @@ class Command:
                     typed_options,
                     self.lookup_id_type)
 
-            if self.mutation is not None and self.value is not None:
+            if self.new_value is not None:
                 mutation_args = self \
                     .__mutation_builder \
                     .build_data_type_mutation_args(
                         data_type,
                         data_types,
-                        self.value)
+                        self.new_value)
                 upload_files = has_files(mutation_args)
                 typed_options.update(mutation_args)
             else:
@@ -90,8 +103,10 @@ class Command:
                     typed_options,
                     flattened_options)
 
-            if self.query is not None:
+            if self.query_type is not None:
                 document = self.__query_builder.build_data_type_query(
+                    self.query_type,
+                    self.result_name,
                     data_type,
                     data_types,
                     typed_options,
@@ -138,8 +153,8 @@ class BuiltCommand:
                 raw_result,
                 self.__command.options,
                 self.__pagination_callback)
-        except TransportQueryError:
-            if retry:
+        except TransportQueryError as err:
+            if get(err, 'extensions.code') == GRAPHQL_VALIDATION_FAILED and retry:
                 self.__command.project.refresh()
                 return self.__command.build().execute(retry=False)
             else:

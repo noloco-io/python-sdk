@@ -36,3 +36,11 @@ MANY_TO_ONE = 'MANY_TO_ONE'
 
 
 MANY_TO_MANY = 'MANY_TO_MANY'
+
+
+###############################################################################
+# GraphQL Error Codes
+###############################################################################
+
+
+GRAPHQL_VALIDATION_FAILED = 'GRAPHQL_VALIDATION_FAILED'

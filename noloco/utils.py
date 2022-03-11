@@ -5,7 +5,9 @@ from noloco.constants import (
     DURATION,
     INTEGER,
     TEXT)
-from noloco.exceptions import NolocoDataTypeNotFoundError
+from noloco.exceptions import (
+    NolocoDataTypeNotFoundError,
+    NolocoQueryNotSupportedError)
 from pydash import (
     find,
     get,

@@ -71,7 +71,7 @@ class Noloco:
             self.__project_id = get(
                 project_document_query_result, 'project.id')
             self.__project_data_types = get(
-                self.project_document_query_result, 'project.dataTypes')
+                project_document_query_result, 'project.dataTypes')
         except TransportQueryError as err:
             raise NolocoAccountApiKeyError(self.__project_name, err)
         except Exception as err:

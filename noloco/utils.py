@@ -198,3 +198,12 @@ def has_files(args):
             return True
 
     return False
+
+
+def result_name_suffix(query):
+    if query == 'find':
+        return 'Collection'
+    elif query == 'get':
+        return ''
+    else:
+        raise NolocoQueryNotSupportedError(query)

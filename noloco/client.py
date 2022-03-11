@@ -1,26 +1,7 @@
-from gql import Client, gql
+from gql import Client
 from gql.transport.aiohttp import AIOHTTPTransport
-from gql.transport.exceptions import TransportQueryError
-from noloco.exceptions import (
-    NolocoAccountApiKeyError,
-    NolocoProjectApiKeyError,
-    NolocoUnknownError)
-from noloco.mutations import MutationBuilder
-from noloco.queries import (
-    PROJECT_DOCUMENT_QUERY,
-    QueryBuilder,
-    VALIDATE_API_KEYS_QUERY)
-from noloco.results import Result
-from noloco.utils import (
-    annotate_collection_args,
-    change_where_to_lookup,
-    find_data_type_by_name,
-    flatten_args,
-    gql_args,
-    has_files)
-from pydash import (
-    get,
-    pascal_case)
+from noloco.project import Project
+from noloco.requests import Command
 
 
 BASE_URL = 'https://api.portals.noloco.io'
@@ -43,61 +24,17 @@ class Noloco:
             NolocoProjectApiKeyError: If we cannot fetch you Project API Key.
             NolocoUnknownError: If we are not sure what went wrong.
         """
-        self.__project_name = portal_name
-        self.__mutation_builder = MutationBuilder()
-        self.__query_builder = QueryBuilder()
-
         # Build the account client that will be used to interact with the
         # project document.
         account_transport = AIOHTTPTransport(
             url=BASE_URL, headers={'Authorization': account_api_key})
-        self.__account_client = Client(
+        account_client = Client(
             transport=account_transport,
-            fetch_schema_from_transport=True)
+            fetch_schema_from_transport=False)
 
         # Fetch the project document, lookup and validate the project API key
         # and cache the data types locally.
-        self.refresh_project()
-
-    def refresh_project(self):
-        # Try to validate the account API key and fetch the project API key.
-        try:
-            project_document_query_result = self.__account_client.execute(
-                gql(PROJECT_DOCUMENT_QUERY),
-                variable_values={'projectId': self.__project_name})
-            project_api_key = get(
-                project_document_query_result,
-                'project.apiKeys.project')
-            self.__project_id = get(
-                project_document_query_result, 'project.id')
-            self.__project_data_types = get(
-                project_document_query_result, 'project.dataTypes')
-        except TransportQueryError as err:
-            raise NolocoAccountApiKeyError(self.__project_name, err)
-        except Exception as err:
-            raise NolocoUnknownError(err)
-
-        # Try to validate the project API key.
-        try:
-            validate_api_keys_query_result = self.__account_client.execute(
-                gql(VALIDATE_API_KEYS_QUERY),
-                variable_values={'projectToken': project_api_key})
-            self.__user_id = get(
-                validate_api_keys_query_result,
-                'validateApiKeys.user.id')
-        except TransportQueryError as err:
-            raise NolocoProjectApiKeyError(self.__project_name, err)
-        except Exception as err:
-            raise NolocoUnknownError(err)
-
-        # Build the project client that will be used to interact with
-        # collections.
-        project_transport = AIOHTTPTransport(
-            url=f'{BASE_URL}/data/{self.__project_name}',
-            headers={'Authorization': project_api_key})
-        self.__project_client = Client(
-            transport=project_transport,
-            fetch_schema_from_transport=True)
+        self.__project = Project(account_client, BASE_URL, portal_name)
 
     def create(self, data_type_name, value, options={}):
         """Creates a record in a Noloco collection.
@@ -136,50 +73,14 @@ class Noloco:
         Returns:
             The record that was created in the Noloco collection.
         """
-        data_types = self.__project_data_types
-        data_type = find_data_type_by_name(data_type_name, data_types)
-
-        # Based on the value provided to update, derive the arguments that will
-        # be used on the mutation.
-        mutation_args = self.__mutation_builder.build_data_type_mutation_args(
-            data_type,
-            data_types,
-            value)
-
-        # Based on the options provided, derive the response options.
-        typed_options = annotate_collection_args(
-            data_type,
-            data_types,
-            options)
-
-        # Join the mutation arguments with the response options.
-        typed_options.update(mutation_args)
-
-        # Flatten the options.
-        mutation_type = 'create'
-        mutation_name = mutation_type + pascal_case(data_type_name)
-        flattened_options = flatten_args(mutation_name, typed_options)
-
-        # Build the mutation.
-        mutation = self.__mutation_builder.build_data_type_mutation(
-            mutation_type,
-            data_type,
-            data_types,
-            typed_options,
-            flattened_options)
-
-        # Execute the mutation and return the result.
-        raw_result = self.__project_client.execute(
-            gql(mutation),
-            variable_values=gql_args(flattened_options),
-            upload_files=has_files(mutation_args))
-
-        return Result.build(
-            data_type_name,
-            mutation_name,
-            raw_result,
-            options,
-            self.get)
+        return Command(self.__project) \
+            .for_data_type(data_type_name) \
+            .with_options(options) \
+            .mutate('create') \
+            .value(value) \
+            .with_pagination_callback(self.get) \
+            .build() \
+            .execute()
 
     def delete(self, data_type_name, options={}):
         """Deletes a record from a Noloco collection.
@@ -201,38 +102,13 @@ class Noloco:
         Returns:
             None.
         """
-        data_types = self.__project_data_types
-        data_type = find_data_type_by_name(data_type_name, data_types)
-
-        # Based on the options provided, derive the response options and
-        # configure the unique field lookup.
-        typed_options = annotate_collection_args(
-            data_type,
-            data_types,
-            options)
-        typed_options = change_where_to_lookup(
-            data_type,
-            typed_options,
-            id_type='ID!')
-
-        # Flatten the options.
-        mutation_type = 'delete'
-        mutation_name = mutation_type + pascal_case(data_type_name)
-        flattened_options = flatten_args(mutation_name, typed_options)
-
-        # Build the mutation.
-        mutation = self.__mutation_builder.build_data_type_mutation(
-            'delete',
-            data_type,
-            data_types,
-            typed_options,
-            flattened_options)
-
-        # Execute the mutation and return the result.
-        raw_result = self.__project_client.execute(
-            gql(mutation), variable_values=gql_args(flattened_options))
-
-        return raw_result[mutation_name]
+        return Command(self.__project) \
+            .for_data_type(data_type_name) \
+            .with_options(options) \
+            .mutate('delete') \
+            .with_lookup('ID!') \
+            .build() \
+            .execute()
 
     def find(self, data_type_name, options={}):
         """Searches a Noloco collection for records matching the provided
@@ -267,34 +143,13 @@ class Noloco:
         Returns:
             The result of querying the Noloco collection.
         """
-        data_types = self.__project_data_types
-        data_type = find_data_type_by_name(data_type_name, data_types)
-
-        # Based on the options provided, derive the search and response
-        # options.
-        typed_options = annotate_collection_args(
-            data_type,
-            data_types,
-            options)
-
-        # Flatten the options.
-        query_name = data_type_name + 'Collection'
-        flattened_options = flatten_args(query_name, typed_options)
-        # Build the query.
-        query = self.__query_builder.build_data_type_collection_query(
-            data_type, data_types, typed_options, flattened_options)
-
-        # Execute the query and return the result.
-        raw_result = self.__project_client.execute(
-            gql(query),
-            variable_values=gql_args(flattened_options))
-
-        return Result.build(
-            data_type_name,
-            query_name,
-            raw_result,
-            options,
-            self.find)
+        return Command(self.__project) \
+            .for_data_type(data_type_name) \
+            .with_options(options) \
+            .query('find') \
+            .with_pagination_callback(self.find) \
+            .build() \
+            .execute()
 
     def get(self, data_type_name, options={}):
         """Fetches a record from a Noloco collection that you identify by any
@@ -323,36 +178,14 @@ class Noloco:
         Returns:
             The result of looking up the Noloco record.
         """
-        data_types = self.__project_data_types
-        data_type = find_data_type_by_name(data_type_name, data_types)
-
-        # Based on the options provided, derive the response options and
-        # configure the unique field lookup.
-        typed_options = annotate_collection_args(
-            data_type,
-            data_types,
-            options)
-        typed_options = change_where_to_lookup(data_type, typed_options)
-
-        # Flatten the options.
-        flattened_options = flatten_args(
-            data_type_name,
-            typed_options)
-
-        # Build the query.
-        query = self.__query_builder.build_data_type_query(
-            data_type, data_types, typed_options, flattened_options)
-
-        # Execute the query and return the result.
-        raw_result = self.__project_client.execute(
-            gql(query), variable_values=gql_args(flattened_options))
-
-        return Result.build(
-            data_type_name,
-            data_type_name,
-            raw_result,
-            options,
-            self.get)
+        return Command(self.__project) \
+            .for_data_type(data_type_name) \
+            .with_options(options) \
+            .query('get') \
+            .with_lookup() \
+            .with_pagination_callback(self.get) \
+            .build() \
+            .execute()
 
     def update(self, data_type_name, value, options={}):
         """Updates a record in a collection.
@@ -390,50 +223,12 @@ class Noloco:
         Returns:
             The result of updating the Noloco record.
         """
-        data_types = self.__project_data_types
-        data_type = find_data_type_by_name(data_type_name, data_types)
-
-        # Based on the value provided to update, derive the arguments that will
-        # be used on the mutation.
-        mutation_args = self.__mutation_builder.build_data_type_mutation_args(
-            data_type,
-            data_types,
-            value)
-
-        # Based on the options provided, derive the response options and
-        # configure the unique field lookup.
-        typed_options = annotate_collection_args(
-            data_type,
-            data_types,
-            options)
-        typed_options = change_where_to_lookup(
-            data_type,
-            typed_options,
-            id_type='ID!')
-
-        # Join the mutation arguments with the lookup and response options.
-        typed_options.update(mutation_args)
-
-        # Flatten the options to be added to the top level of the mutation.
-        mutation_type = 'update'
-        mutation_name = mutation_type + pascal_case(data_type_name)
-        flattened_options = flatten_args(mutation_name, typed_options)
-
-        mutation = self.__mutation_builder.build_data_type_mutation(
-            mutation_type,
-            data_type,
-            data_types,
-            typed_options,
-            flattened_options)
-
-        raw_result = self.__project_client.execute(
-            gql(mutation),
-            variable_values=gql_args(flattened_options),
-            upload_files=has_files(mutation_args))
-
-        return Result.build(
-            data_type_name,
-            mutation_name,
-            raw_result,
-            options,
-            self.get)
+        return Command(self.__project) \
+            .for_data_type(data_type_name) \
+            .with_options(options) \
+            .mutate('update') \
+            .with_lookup('ID!') \
+            .value(value) \
+            .with_pagination_callback(self.get) \
+            .build() \
+            .execute()

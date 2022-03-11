@@ -34,6 +34,11 @@ class NolocoProjectApiKeyError(Exception):
         self.error = error
 
 
+class NolocoQueryNotSupportedError(Exception):
+    def __init__(self, query_name):
+        super().__init__(
+            f'{query_name} queries are not supported.')
+
 class NolocoUnknownError(Exception):
     def __init__(self, error):
         super().__init__('Something went wrong!')

@@ -5,7 +5,9 @@ from noloco.constants import (
     DURATION,
     INTEGER,
     TEXT)
-from noloco.exceptions import NolocoDataTypeNotFoundError
+from noloco.exceptions import (
+    NolocoDataTypeNotFoundError,
+    NolocoQueryNotSupportedError)
 from pydash import (
     find,
     get,
@@ -198,3 +200,12 @@ def has_files(args):
             return True
 
     return False
+
+
+def result_name_suffix(query):
+    if query == 'find':
+        return 'Collection'
+    elif query == 'get':
+        return ''
+    else:
+        raise NolocoQueryNotSupportedError(query)

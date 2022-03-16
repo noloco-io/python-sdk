@@ -268,3 +268,44 @@ Finally, if you know the ID of a record in a collection then you can delete it f
 ```
 client.delete('book', 1)
 ```
+
+## Field types
+
+You can use the following table to reference the mapping from Noloco field types onto Python types. For fields that are Python strings requiring a specific format, the format we expect is given here.
+
+| Noloco Field Type | Python Type | Expected Formats           |
+|-------------------|-------------|----------------------------|
+| Boolean           | bool        |                            |
+| Date              | str         | 'YYYY-MM-DDTHH:MM:SS.XXXZ' |
+| Decimal           | float       |                            |
+| Duration          | str         | 'HH:MM:SS'                 |
+| File/Upload       | (see below) |                            |
+| Integer           | int         |                            |
+| Single Option     | str         | 'SCREAMING_SNAKE_CASE'     |
+| Text              | str         |                            |
+
+### Files
+
+Note that unlike other the types, files have a different Python type depending on whether they are being given as an input or an output.
+
+When you are inputting a file to the SDK to be uploaded, you need to give the SDK an opened file, for example:
+
+```
+profile_picture = open('/Users/user/Pictures/profile_picture.jpeg', 'rb')
+```
+
+You will need to manage the closing of this file yourself after the SDK is done with it.
+
+When the SDK is outputting a file to you, it will give you a dictionary with information about the file:
+
+```
+{
+    'id': '...',
+    'uuid': '...',
+    'fileType': 'IMAGE',
+    'url': 'https://app-media.noloco.app/[project-name]/...profile_picture.jpeg',
+    'name': '%2FUsers%2Fuser%2FPictures%2Fprofile_picture.jpeg'
+}
+```
+
+You can use the URL to download the file if you need the contents.

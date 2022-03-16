@@ -39,7 +39,7 @@ class MutationBuilder:
                     # This is a top-level field, so map the arg onto a
                     # primitive.
                     mutation_args[arg_name] = {
-                        'type': gql_type(data_type_field['type']),
+                        'type': gql_type(data_type, data_type_field),
                         'value': arg_value
                     }
                 elif get(arg_value, 'connect') is not None:
@@ -93,7 +93,7 @@ class MutationBuilder:
         mutation_args = build_operation_args(flattened_options)
 
         mutation_fragment = self.fields_builder.build_fields(
-            mutation + pascal_case(data_type['name']),
+            mutation + pascal_case(data_type['name'], strict=False),
             data_type,
             data_types,
             options)

@@ -138,7 +138,7 @@ $ print(book)
 If you know the value of a unique field of a record in a collection then you can read it from the collection:
 
 ```
-book = client.get('book', {
+book = client.findUnique('book', {
     'where': {
         'id': {
             'equals': 1
@@ -163,7 +163,7 @@ Jane
 If you do not know the value of a unique field, or you just want to read multiple fields at once then you can do so:
 
 ```
-book_collection = client.find('book', {
+book_collection = client.findMany('book', {
     'where': {
         'pageCount': {
             'lt': 250

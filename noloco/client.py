@@ -36,31 +36,30 @@ class Noloco:
         # and cache the data types locally.
         self.__project = Project(account_client, BASE_URL, portal_name)
 
-    def create(self, data_type_name, value, options={}):
+    def create(self, data_type_name, options):
         """Creates a record in a Noloco collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            value: The record to create. For example:
-
-                {
-                    'firstName': 'Jane',
-                    'lastName': 'Doe',
-                    'email': 'jane@noloco.io',
-                    'company': {
-                        'connect': {
-                            id: 2
-                        }
-                    },
-                    'profilePicture': [open file]
-                }
-            options: After creating the record in the Noloco collection, the
-                created record will be returned along with it's top-level
+            options: The record to create as the 'data' field and any other
+                options; after creating the record in the Noloco collection,
+                the created record will be returned along with it's top-level
                 fields. If you would like to also return some relationship
                 fields you can do them using options. For example:
 
                 {
+                    'data': {
+                        'firstName': 'Jane',
+                        'lastName': 'Doe',
+                        'email': 'jane@noloco.io',
+                        'company': {
+                            'connect': {
+                                id: 2
+                            }
+                        },
+                        'profilePicture': [open file]
+                    },
                     'include': {
                         'company': {
                             'include': {
@@ -75,9 +74,9 @@ class Noloco:
         """
         return Command(self.__project) \
             .for_data_type(data_type_name) \
-            .with_options(options) \
+            .with_options({'include': options['include']}) \
             .mutate('create') \
-            .value(value) \
+            .value(options['data']) \
             .with_pagination_callback(self.get) \
             .build() \
             .execute()
@@ -141,7 +140,7 @@ class Noloco:
             .build() \
             .execute()
 
-    def get(self, data_type_name, options={}):
+    def get(self, data_type_name, options):
         """Fetches a record from a Noloco collection that you identify by any
         of its unique fields.
 
@@ -177,30 +176,31 @@ class Noloco:
             .build() \
             .execute()
 
-    def update(self, data_type_name, id, value, options={}):
+    def update(self, data_type_name, id, options):
         """Updates a record in a collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
             id: the ID of the record to update.
-            value: The values of the record to update. For example:
+            options: The record to update as the 'data' field and any other
+                options; after creating the record in the Noloco collection,
+                the created record will be returned along with it's top-level
+                fields. If you would like to also return some relationship
+                fields you can do them using options. For example:
 
                 {
-                    'firstName': 'Jane',
-                    'lastName': 'Doe',
-                    'email': 'jane@noloco.io',
-                    'company': {
-                        'connect': {
-                            id: 2
-                        }
+                    'data': {
+                        'firstName': 'Jane',
+                        'lastName': 'Doe',
+                        'email': 'jane@noloco.io',
+                        'company': {
+                            'connect': {
+                                id: 2
+                            }
+                        },
+                        'profilePicture': [open file]
                     },
-                    'profilePicture': [open file]
-                }
-            options: The schema that you would like back from Noloco. For
-                example:
-
-                {
                     'include': {
                         'role': True
                     }
@@ -211,10 +211,10 @@ class Noloco:
         """
         return Command(self.__project) \
             .for_data_type(data_type_name) \
-            .with_options(options) \
+            .with_options({'include': options['include']}) \
             .mutate('update') \
             .with_id_lookup(id) \
-            .value(value) \
+            .value(options['data']) \
             .with_pagination_callback(self.get) \
             .build() \
             .execute()

@@ -70,19 +70,26 @@ To create a new author and then create a new book linked to them you would write
 
 ```
 author = client.create('author', {
-    'firstName': 'Jane',
-    'lastName': 'Doe'
+    'data': {
+        'firstName': 'Jane',
+        'lastName': 'Doe'
+    }
 })
 
 book = client.create('book', {
-    'title': 'My Biography',
-    'author': {
-        'connect': {
-            'id': author.id
-        }
+    'data': {
+        'title': 'My Biography',
+        'author': {
+            'connect': {
+                'id': author.id
+            }
+        },
+        'pageCount': 500
     },
-    'pageCount': 500
-}, {'include': {'author': True}})
+    'include': {
+        'author': True
+    }
+})
 ```
 
 You might be wondering what the significance of `{'include': {'author': True}}` is... Whenever we return a record from the API we will always return all the top-level fields (including files) by default. However we do not include relationship fields unless you specifically tell the client to include them in the `options` parameters. Because this call to create a `book` is including `author` in its `options`, when the created `book` is returned, the author relationship will also be included. In an interpreter we can see this:
@@ -221,7 +228,14 @@ $ print(book_collection.next_page().previous_page().data)
 If you know the ID of a record in a collection then you can update it in the collection:
 
 ```
-book = client.update('book', 1, {'pageCount': 200,}, {'include': {'author': True}})
+book = client.update('book', 1, {
+    'data': {
+        'pageCount': 200
+    },
+    'include': {
+        'author': True
+    }
+})
 ```
 
 You can `print` it like we did in the previous example, or you can directly access fields on the result. This is because we wrap all responses in a `Result` class that inherits from `dict`:

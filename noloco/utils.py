@@ -202,6 +202,15 @@ def has_files(args):
     return False
 
 
+def options_without_data(options):
+    new_options = {}
+
+    for option in options.keys():
+        if option != 'data':
+            new_options[option] = options[option]
+
+    return new_options
+
 def result_name_suffix(query):
     if query == 'find':
         return 'Collection'

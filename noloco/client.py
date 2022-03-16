@@ -2,6 +2,7 @@ from gql import Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from noloco.project import Project
 from noloco.requests import Command
+from noloco.utils import options_without_data
 
 
 BASE_URL = 'https://api.portals.noloco.io'
@@ -74,7 +75,7 @@ class Noloco:
         """
         return Command(self.__project) \
             .for_data_type(data_type_name) \
-            .with_options({'include': options['include']}) \
+            .with_options(options_without_data(options)) \
             .mutate('create') \
             .value(options['data']) \
             .with_pagination_callback(self.get) \
@@ -211,7 +212,7 @@ class Noloco:
         """
         return Command(self.__project) \
             .for_data_type(data_type_name) \
-            .with_options({'include': options['include']}) \
+            .with_options(options_without_data(options)) \
             .mutate('update') \
             .with_id_lookup(id) \
             .value(options['data']) \

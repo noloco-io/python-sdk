@@ -78,7 +78,7 @@ class Noloco:
             .with_options(options_without_data(options)) \
             .mutate('create') \
             .value(options['data']) \
-            .with_pagination_callback(self.get) \
+            .with_pagination_callback(self.findUnique) \
             .build() \
             .execute()
 
@@ -100,7 +100,7 @@ class Noloco:
             .build() \
             .execute()
 
-    def find(self, data_type_name, options={}):
+    def findMany(self, data_type_name, options={}):
         """Searches a Noloco collection for records matching the provided
         criteria.
 
@@ -137,11 +137,11 @@ class Noloco:
             .for_data_type(data_type_name) \
             .with_options(options) \
             .query('find') \
-            .with_pagination_callback(self.find) \
+            .with_pagination_callback(self.findMany) \
             .build() \
             .execute()
 
-    def get(self, data_type_name, options):
+    def findUnique(self, data_type_name, options):
         """Fetches a record from a Noloco collection that you identify by any
         of its unique fields.
 
@@ -173,7 +173,7 @@ class Noloco:
             .with_options(options) \
             .query('get') \
             .with_unique_lookup() \
-            .with_pagination_callback(self.get) \
+            .with_pagination_callback(self.findUnique) \
             .build() \
             .execute()
 
@@ -216,6 +216,6 @@ class Noloco:
             .mutate('update') \
             .with_id_lookup(id) \
             .value(options['data']) \
-            .with_pagination_callback(self.get) \
+            .with_pagination_callback(self.findUnique) \
             .build() \
             .execute()

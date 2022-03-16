@@ -218,12 +218,10 @@ $ print(book_collection.next_page().previous_page().data)
 
 ### Updating a record in a collection
 
-If you know the value of a unique field of a record in a collection then you can update it in the collection:
+If you know the ID of a record in a collection then you can update it in the collection:
 
 ```
-book = client.update('book', {
-    'pageCount': 499,
-}, {'where': {'id': {'equals': 1}}})
+book = client.update('book', 1, {'pageCount': 200,}, {'include': {'author': True}})
 ```
 
 You can `print` it like we did in the previous example, or you can directly access fields on the result. This is because we wrap all responses in a `Result` class that inherits from `dict`:
@@ -244,14 +242,8 @@ $ print(book)
 
 ### Deleting a record from a collection
 
-Finally, if you know the value of a unique field of a record in a collection then you can delete it from the collection:
+Finally, if you know the ID of a record in a collection then you can delete it from the collection:
 
 ```
-client.delete('book', {
-    'where': {
-        'id': {
-            'equals': 1
-        }
-    }
-})
+client.delete('book', 1)
 ```

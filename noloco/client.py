@@ -82,31 +82,21 @@ class Noloco:
             .build() \
             .execute()
 
-    def delete(self, data_type_name, options={}):
+    def delete(self, data_type_name, id):
         """Deletes a record from a Noloco collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            options: The configuration for the deletion. At a minimum this must
-                identify the record to be deleted by any of its unique fields.:
-
-                {
-                    'where': {
-                        'id': {
-                            'equals': 2
-                        }
-                    }
-                }
+            id: The ID of the record to delete.
 
         Returns:
             None.
         """
         return Command(self.__project) \
             .for_data_type(data_type_name) \
-            .with_options(options) \
             .mutate('delete') \
-            .with_lookup('ID!') \
+            .with_id_lookup(id) \
             .build() \
             .execute()
 
@@ -182,18 +172,19 @@ class Noloco:
             .for_data_type(data_type_name) \
             .with_options(options) \
             .query('get') \
-            .with_lookup() \
+            .with_unique_lookup() \
             .with_pagination_callback(self.get) \
             .build() \
             .execute()
 
-    def update(self, data_type_name, value, options={}):
+    def update(self, data_type_name, id, value, options={}):
         """Updates a record in a collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            value: The record to update. For example:
+            id: the ID of the record to update.
+            value: The values of the record to update. For example:
 
                 {
                     'firstName': 'Jane',
@@ -213,11 +204,6 @@ class Noloco:
                     'include': {
                         'role': True
                     }
-                    'where': {
-                        'id': {
-                            'equals': 2
-                        }
-                    }
                 }
 
         Returns:
@@ -227,7 +213,7 @@ class Noloco:
             .for_data_type(data_type_name) \
             .with_options(options) \
             .mutate('update') \
-            .with_lookup('ID!') \
+            .with_id_lookup(id) \
             .value(value) \
             .with_pagination_callback(self.get) \
             .build() \

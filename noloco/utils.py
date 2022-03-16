@@ -81,7 +81,7 @@ def build_data_type_args(args):
         return ''
 
 
-def change_where_to_lookup(data_type, options, id_type='ID'):
+def change_where_to_lookup(data_type, options):
     where = options.pop('where')['value']
     lookup_key = list(where.keys())[0]
 
@@ -90,7 +90,7 @@ def change_where_to_lookup(data_type, options, id_type='ID'):
     lookup_value = where[lookup_key]['equals']
 
     if lookup_key == 'id':
-        lookup_type = id_type
+        lookup_type = 'ID'
 
     options[lookup_key] = {'type': lookup_type, 'value': lookup_value}
 

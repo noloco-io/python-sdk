@@ -202,7 +202,7 @@ def gql_type(data_type, data_type_field):
 
 def has_files(args):
     for arg_value in args.values():
-        if arg_value['type'] == 'Upload':
+        if 'Upload' in arg_value['type']:
             return True
 
     return False

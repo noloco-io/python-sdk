@@ -136,7 +136,7 @@ class Noloco:
         return Command(self.__project) \
             .for_data_type(data_type_name) \
             .with_options(options) \
-            .query('find') \
+            .query('findMany') \
             .with_pagination_callback(self.findMany) \
             .build() \
             .execute()
@@ -171,7 +171,7 @@ class Noloco:
         return Command(self.__project) \
             .for_data_type(data_type_name) \
             .with_options(options) \
-            .query('get') \
+            .query('findUnique') \
             .with_unique_lookup() \
             .with_pagination_callback(self.findUnique) \
             .build() \

@@ -212,9 +212,9 @@ def options_without_data(options):
     return new_options
 
 def result_name_suffix(query):
-    if query == 'find':
+    if query == 'findMany':
         return 'Collection'
-    elif query == 'get':
+    elif query == 'findUnique':
         return ''
     else:
         raise NolocoQueryNotSupportedError(query)

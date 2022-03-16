@@ -141,7 +141,7 @@ If you know the value of a unique field of a record in a collection then you can
 book = client.findUnique('book', {
     'where': {
         'id': {
-            'equals': 3
+            'equals': 1
         }
     },
     'include': {

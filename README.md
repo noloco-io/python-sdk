@@ -141,7 +141,7 @@ If you know the value of a unique field of a record in a collection then you can
 book = client.findUnique('book', {
     'where': {
         'id': {
-            'equals': 1
+            'equals': 3
         }
     },
     'include': {
@@ -180,23 +180,20 @@ book_collection = client.findMany('book', {
 This will return a `CollectionResult` instance. This is a paginated set of results limited to the value of `first` at a time. You can check the total number of records that match your criteria:
 
 ```
-$ print(book_collection.total_count)
+$ print(book_collection)
 
-51
-```
-
-You can access the current page of data:
-
-```
-$ print(book_collection.data)
-
-[
-    {'id': '10', ...},
-    {'id': '14', ...},
-    {'id': '16', ...},
-    {'id': '17', ...},
-    {'id': '22', ...},
-]
+{
+    'total_count': 51,
+    'has_previous_page': False,
+    'has_next_page': True,
+    'data': [
+        {'id': '10', ...},
+        {'id': '14', ...},
+        {'id': '16', ...},
+        {'id': '17', ...},
+        {'id': '22', ...},
+    ]
+}
 ```
 
 We then provide two methods that let you page through the data:
@@ -204,23 +201,33 @@ We then provide two methods that let you page through the data:
 ```
 $ print(book_collection.next_page().data)
 
-[
-    {'id': '23', ...},
-    {'id': '27', ...},
-    {'id': '29', ...},
-    {'id': '30', ...},
-    {'id': '38', ...},
-]
+{
+    'total_count': 51,
+    'has_previous_page': True,
+    'has_next_page': True,
+    'data': [
+        {'id': '23', ...},
+        {'id': '27', ...},
+        {'id': '29', ...},
+        {'id': '30', ...},
+        {'id': '38', ...},
+    ]
+}
 
-$ print(book_collection.next_page().previous_page().data)
+$ print(book_collection.next_page().previous_page())
 
-[
-    {'id': '10', ...},
-    {'id': '14', ...},
-    {'id': '16', ...},
-    {'id': '17', ...},
-    {'id': '22', ...},
-]
+{
+    'total_count': 51,
+    'has_previous_page': False,
+    'has_next_page': True,
+    'data': [
+        {'id': '10', ...},
+        {'id': '14', ...},
+        {'id': '16', ...},
+        {'id': '17', ...},
+        {'id': '22', ...},
+    ]
+}
 ```
 
 ### Updating a record in a collection

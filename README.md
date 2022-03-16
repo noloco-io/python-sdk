@@ -281,6 +281,7 @@ You can use the following table to reference the mapping from Noloco field types
 | Duration          | str         | 'HH:MM:SS'                 |
 | File/Upload       | (see below) |                            |
 | Integer           | int         |                            |
+| Multiple Option   | list        | ['SCREAMING_SNAKE_CASE']   |
 | Single Option     | str         | 'SCREAMING_SNAKE_CASE'     |
 | Text              | str         |                            |
 

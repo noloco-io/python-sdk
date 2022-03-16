@@ -24,6 +24,9 @@ BOOLEAN = 'BOOLEAN'
 SINGLE_OPTION = 'SINGLE_OPTION'
 
 
+MULTIPLE_OPTION = 'MULTIPLE_OPTION'
+
+
 ###############################################################################
 # Relationship Types
 ###############################################################################

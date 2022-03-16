@@ -4,6 +4,7 @@ from noloco.constants import (
     DECIMAL,
     DURATION,
     INTEGER,
+    MULTIPLE_OPTION,
     SINGLE_OPTION,
     TEXT)
 from noloco.exceptions import (
@@ -198,6 +199,10 @@ def gql_type(data_type, data_type_field):
     elif field_type == SINGLE_OPTION:
         return pascal_case(data_type['name'], strict=False) + \
             pascal_case(data_type_field['name'], strict=False)
+    elif field_type == MULTIPLE_OPTION:
+        enum_prefix = pascal_case(data_type['name'], strict=False)
+        enum_suffix = pascal_case(data_type_field['name'], strict=False)
+        return f'[{enum_prefix}{enum_suffix}!]'
 
 
 def has_files(args):

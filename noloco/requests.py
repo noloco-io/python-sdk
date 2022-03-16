@@ -63,7 +63,8 @@ class Command:
 
     def mutate(self, mutation):
         self.mutation = mutation
-        self.result_name = mutation + pascal_case(self.data_type_name)
+        self.result_name = mutation + pascal_case(
+            self.data_type_name, strict=False)
         return self
 
     def query(self, query_type):

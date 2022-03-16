@@ -4,6 +4,7 @@ from noloco.constants import (
     DECIMAL,
     DURATION,
     INTEGER,
+    SINGLE_OPTION,
     TEXT)
 from noloco.exceptions import (
     NolocoDataTypeNotFoundError,
@@ -27,7 +28,7 @@ def annotate_collection_args(data_type, data_types, args):
     if get(args, 'order_by') is not None:
         annotated_args['orderBy'] = {'type': 'OrderBy', 'value': args['order_by']}
     if get(args, 'where') is not None:
-        whereType = pascal_case(data_type['name']) + 'WhereInput'
+        whereType = pascal_case(data_type['name'], strict=False) + 'WhereInput'
         annotated_args['where'] = {'type': whereType, 'value': args['where']}
 
     # Recursively process nested supported parameters.
@@ -86,7 +87,7 @@ def change_where_to_lookup(data_type, options):
     lookup_key = list(where.keys())[0]
 
     lookup_field = find_field_by_name(lookup_key, data_type['fields'])
-    lookup_type = gql_type(lookup_field['type'])
+    lookup_type = gql_type(data_type, lookup_field)
     lookup_value = where[lookup_key]['equals']
 
     if lookup_key == 'id':
@@ -179,7 +180,9 @@ def gql_args(args):
     return variables
 
 
-def gql_type(field_type):
+def gql_type(data_type, data_type_field):
+    field_type = data_type_field['type']
+
     if field_type == TEXT:
         return 'String'
     elif field_type == DATE:
@@ -192,6 +195,9 @@ def gql_type(field_type):
         return 'Duration'
     elif field_type == BOOLEAN:
         return 'Boolean'
+    elif field_type == SINGLE_OPTION:
+        return pascal_case(data_type['name'], strict=False) + \
+            pascal_case(data_type_field['name'], strict=False)
 
 
 def has_files(args):

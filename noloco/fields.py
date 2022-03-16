@@ -35,11 +35,19 @@ DATA_TYPE_COLLECTION_FIELDS = '''{data_type_name}{data_type_args} {{
 FILE_FIELDS = '''id uuid fileType url name'''
 
 
-FILE_CONNECTION_FIELDS = '''edges {{
+FILE_CONNECTION_FIELDS = '''totalCount
+edges {{
   node {{
     {file_query}
   }}
-}}'''.format(file_query=FILE_FIELDS)
+}}
+pageInfo {{
+  hasPreviousPage
+  hasNextPage
+  startCursor
+  endCursor
+}}
+__typename'''.format(file_query=FILE_FIELDS)
 
 
 class DataTypeFieldsBuilder:

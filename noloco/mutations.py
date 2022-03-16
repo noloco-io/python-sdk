@@ -1,3 +1,4 @@
+from noloco.constants import MANY_TO_MANY, ONE_TO_ONE
 from noloco.exceptions import (
     NolocoFieldNotFoundError,
     NolocoUnknownError)
@@ -55,10 +56,16 @@ class MutationBuilder:
                     # This is a file upload field, so map the arg onto an
                     # Upload arg, although do not open the file yet.
                     # TODO - stronger validation and error handling.
-                    mutation_args[arg_name] = {
-                        'type': 'Upload',
-                        'value': arg_value
-                    }
+                    if data_type_field['relationship'] == MANY_TO_MANY:
+                        mutation_args[arg_name] = {
+                            'type': '[Upload!]',
+                            'value': arg_value
+                        }
+                    else:
+                        mutation_args[arg_name] = {
+                            'type': 'Upload',
+                            'value': arg_value
+                        }
                 else:
                     raise NolocoUnknownError()
             else:

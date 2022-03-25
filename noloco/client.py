@@ -9,13 +9,16 @@ BASE_URL = 'https://api.portals.noloco.io'
 
 
 class Noloco:
-    def __init__(self, account_api_key, portal_name):
+    def __init__(self, account_api_key, portal_name, base_url=BASE_URL):
         """Initialises a Noloco client.
 
         Args:
             account_api_key: The Account API Key from your Integrations & API
                 Keys settings page.
             portal_name: The name of your Noloco portal.
+            base_url: The URL that the API is hosted at. This is an optional
+                parameter and if you are using the production API you should
+                not provide it.
 
         Returns:
             A Noloco client.
@@ -28,14 +31,14 @@ class Noloco:
         # Build the account client that will be used to interact with the
         # project document.
         account_transport = AIOHTTPTransport(
-            url=BASE_URL, headers={'Authorization': account_api_key})
+            url=base_url, headers={'Authorization': account_api_key})
         account_client = Client(
             transport=account_transport,
             fetch_schema_from_transport=False)
 
         # Fetch the project document, lookup and validate the project API key
         # and cache the data types locally.
-        self.__project = Project(account_client, BASE_URL, portal_name)
+        self.__project = Project(account_client, base_url, portal_name)
 
     def create(self, data_type_name, options):
         """Creates a record in a Noloco collection.

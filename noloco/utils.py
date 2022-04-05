@@ -141,12 +141,16 @@ def find_relationship_data_type(
     else:
         # If there isn't a corresponding relationship field on the
         # parent data type then this is a reverse relationship and we
-        # have to search for the relationship data type by it having a
-        # field of the expected reverseName and type matching the
-        # parent type.
+        # have to search for the relationship data type.
         for candidate_data_type in data_types:
             for field in candidate_data_type['fields']:
+                # We are looking for any fields whose type matches up with the
+                # name of the parent data type that the reverse relationship is
+                # from.
                 if field['type'] == data_type_name:
+                    # If the reverse name is populated and matches the parent
+                    # type then we have found the data type the relationship
+                    # goes to.
                     if field['reverseName'] is not None and \
                             field['reverseName'] != '':
                         reverseName = field['reverseName'] + 'Collection'
@@ -155,6 +159,10 @@ def find_relationship_data_type(
                                 'data_type': candidate_data_type,
                                 'is_collection': True
                             }
+                    # If the reverse name is not populated but this field is a
+                    # one-to-one relationship and the data type name matches
+                    # the relationship name then we have found the data type
+                    # the relationship goes to.
                     elif field['relationship'] == ONE_TO_ONE:
                         if candidate_data_type['name'] == relationship_name:
                             return {

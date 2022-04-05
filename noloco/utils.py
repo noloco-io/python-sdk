@@ -5,7 +5,9 @@ from noloco.constants import (
     DURATION,
     INTEGER,
     MANY_TO_MANY,
+    MANY_TO_ONE,
     MULTIPLE_OPTION,
+    ONE_TO_MANY,
     ONE_TO_ONE,
     SINGLE_OPTION,
     TEXT)
@@ -136,7 +138,9 @@ def find_relationship_data_type(
         return {
             'data_type': find_data_type_by_name(
                 relationship_field['type'], data_types),
-            'is_collection': relationship_field['relationship'] == MANY_TO_MANY
+            'is_collection':
+                relationship_field['relationship'] == MANY_TO_MANY or
+                relationship_field['relationship'] == ONE_TO_MANY
         }
     else:
         # If there isn't a corresponding relationship field on the
@@ -157,7 +161,9 @@ def find_relationship_data_type(
                         if reverseName == relationship_name:
                             return {
                                 'data_type': candidate_data_type,
-                                'is_collection': True
+                                'is_collection':
+                                    field['relationship'] == MANY_TO_MANY or
+                                    field['relationship'] == MANY_TO_ONE
                             }
                     # If the reverse name is not populated but this field is a
                     # one-to-one relationship and the data type name matches

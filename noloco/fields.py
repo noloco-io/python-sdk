@@ -61,8 +61,6 @@ class DataTypeFieldsBuilder:
         related_fields = []
 
         for relationship_name, ignore_children in include.items():
-            relationship_field = find_field_by_name(
-              relationship_name, fields)
             relationship_data_type = find_relationship_data_type(
                 relationship_name,
                 data_type_name,
@@ -80,11 +78,11 @@ class DataTypeFieldsBuilder:
             else:
                 response = ignore_children
 
-            is_collection = relationship_field is None or \
-                relationship_field['relationship'] == MANY_TO_MANY
+            is_collection = relationship_data_type['is_collection']
+
             relationship_schema = self.build_fields(
                     relationship_name,
-                    relationship_data_type,
+                    relationship_data_type['data_type'],
                     data_types,
                     response,
                     data_type_path=data_type_full_name + '_',

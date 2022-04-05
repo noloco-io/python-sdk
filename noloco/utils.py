@@ -4,7 +4,11 @@ from noloco.constants import (
     DECIMAL,
     DURATION,
     INTEGER,
+    MANY_TO_MANY,
+    MANY_TO_ONE,
     MULTIPLE_OPTION,
+    ONE_TO_MANY,
+    ONE_TO_ONE,
     SINGLE_OPTION,
     TEXT)
 from noloco.exceptions import (
@@ -42,7 +46,7 @@ def annotate_collection_args(data_type, data_types, args):
                     nested_data_type_name,
                     data_type['name'],
                     data_type['fields'],
-                    data_types)
+                    data_types)['data_type']
                 annotated_args['include'][nested_data_type_name] = \
                     annotate_collection_args(
                         relationship_data_type,
@@ -131,25 +135,46 @@ def find_relationship_data_type(
         # If the relationship field exists on the parent data type then
         # this is a forward relationship and we can simply look up the
         # relationship data type by the corresponding field type.
-        return find_data_type_by_name(relationship_field['type'], data_types)
+        return {
+            'data_type': find_data_type_by_name(
+                relationship_field['type'], data_types),
+            'is_collection':
+                relationship_field['relationship'] == MANY_TO_MANY or
+                relationship_field['relationship'] == ONE_TO_MANY
+        }
     else:
         # If there isn't a corresponding relationship field on the
         # parent data type then this is a reverse relationship and we
-        # have to search for the relationship data type by it having a
-        # field of the expected reverseName and type matching the
-        # parent type.
+        # have to search for the relationship data type.
         for candidate_data_type in data_types:
-            candidate_fields = [
-                field
-                for field
-                in candidate_data_type['fields']
-                if field['reverseName'] is not None]
-
-            for field in candidate_fields:
-                reverseName = field['reverseName'] + 'Collection'
-                if field['type'] == data_type_name and \
-                        reverseName == relationship_name:
-                    return candidate_data_type
+            for field in candidate_data_type['fields']:
+                # We are looking for any fields whose type matches up with the
+                # name of the parent data type that the reverse relationship is
+                # from.
+                if field['type'] == data_type_name:
+                    # If the reverse name is populated and matches the parent
+                    # type then we have found the data type the relationship
+                    # goes to.
+                    if field['reverseName'] is not None and \
+                            field['reverseName'] != '':
+                        reverseName = field['reverseName'] + 'Collection'
+                        if reverseName == relationship_name:
+                            return {
+                                'data_type': candidate_data_type,
+                                'is_collection':
+                                    field['relationship'] == MANY_TO_MANY or
+                                    field['relationship'] == MANY_TO_ONE
+                            }
+                    # If the reverse name is not populated but this field is a
+                    # one-to-one relationship and the data type name matches
+                    # the relationship name then we have found the data type
+                    # the relationship goes to.
+                    elif field['relationship'] == ONE_TO_ONE:
+                        if candidate_data_type['name'] == relationship_name:
+                            return {
+                                'data_type': candidate_data_type,
+                                'is_collection': False
+                            }
 
 
 def flatten_args(data_type_name, args):

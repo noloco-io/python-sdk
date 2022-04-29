@@ -87,9 +87,9 @@ class QueryBuilder:
             is_collection)
 
         if is_collection:
-          query_template = DATA_TYPE_COLLECTION_QUERY
+            query_template = DATA_TYPE_COLLECTION_QUERY
         else:
-          query_template = DATA_TYPE_QUERY
+            query_template = DATA_TYPE_QUERY
 
         query = query_template.format(
             query_args=query_args,

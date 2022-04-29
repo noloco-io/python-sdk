@@ -1,5 +1,6 @@
 from noloco.constants import (
     BOOLEAN,
+    COLLECTION,
     DATE,
     DECIMAL,
     DURATION,
@@ -157,7 +158,7 @@ def find_relationship_data_type(
                     # goes to.
                     if field['reverseName'] is not None and \
                             field['reverseName'] != '':
-                        reverseName = field['reverseName'] + 'Collection'
+                        reverseName = field['reverseName'].rstrip(COLLECTION)
                         if reverseName == relationship_name:
                             return {
                                 'data_type': candidate_data_type,

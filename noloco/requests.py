@@ -162,7 +162,8 @@ class BuiltCommand:
                 self.__command.options,
                 self.__pagination_callback)
         except TransportQueryError as err:
-            if get(err, 'extensions.code') == GRAPHQL_VALIDATION_FAILED and retry:
+            if get(err, 'extensions.code') == GRAPHQL_VALIDATION_FAILED and \
+                    retry:
                 self.__command.project.refresh()
                 return self.__command.build().execute(retry=False)
             else:

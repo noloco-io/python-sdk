@@ -1,4 +1,4 @@
-from noloco.constants import MANY_TO_MANY, ONE_TO_ONE
+from noloco.constants import MANY_TO_MANY
 from noloco.exceptions import (
     NolocoFieldNotFoundError,
     NolocoUnknownError)

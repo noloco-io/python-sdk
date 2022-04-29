@@ -39,6 +39,7 @@ class NolocoQueryNotSupportedError(Exception):
         super().__init__(
             f'{query_name} queries are not supported.')
 
+
 class NolocoUnknownError(Exception):
     def __init__(self, error):
         super().__init__('Something went wrong!')

@@ -1,10 +1,8 @@
 from noloco.constants import (
-    MANY_TO_MANY,
     MANY_TO_ONE,
     ONE_TO_ONE)
 from noloco.utils import (
     build_data_type_args,
-    find_field_by_name,
     find_relationship_data_type)
 
 

@@ -32,7 +32,9 @@ def annotate_collection_args(data_type, data_types, args):
         annotated_args['first'] = {'type': 'Int', 'value': args['first']}
     if get(args, 'order_by') is not None:
         annotated_args['orderBy'] = {
-            'type': 'OrderBy', 'value': args['order_by']}
+            'type': 'OrderBy',
+            'value': args['order_by']
+        }
     if get(args, 'where') is not None:
         whereType = pascal_case(data_type['name'], strict=False) + 'WhereInput'
         annotated_args['where'] = {'type': whereType, 'value': args['where']}

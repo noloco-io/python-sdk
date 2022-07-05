@@ -31,7 +31,8 @@ def annotate_collection_args(data_type, data_types, args):
     if get(args, 'first') is not None:
         annotated_args['first'] = {'type': 'Int', 'value': args['first']}
     if get(args, 'order_by') is not None:
-        annotated_args['orderBy'] = {'type': 'OrderBy', 'value': args['order_by']}
+        annotated_args['orderBy'] = {
+            'type': 'OrderBy', 'value': args['order_by']}
     if get(args, 'where') is not None:
         whereType = pascal_case(data_type['name'], strict=False) + 'WhereInput'
         annotated_args['where'] = {'type': whereType, 'value': args['where']}
@@ -206,28 +207,29 @@ def gql_args(args):
     return variables
 
 
-def gql_type(data_type, data_type_field):
+def gql_type(data_type, data_type_field, is_required=False):
     field_type = data_type_field['type']
 
     if field_type == TEXT:
-        return 'String'
+        return with_required('String', is_required)
     elif field_type == DATE:
-        return 'DateTime'
+        return with_required('DateTime', is_required)
     elif field_type == INTEGER:
-        return 'Int'
+        return with_required('Int', is_required)
     elif field_type == DECIMAL:
-        return 'Float'
+        return with_required('Float', is_required)
     elif field_type == DURATION:
-        return 'Duration'
+        return with_required('Duration', is_required)
     elif field_type == BOOLEAN:
-        return 'Boolean'
+        return with_required('Boolean', is_required)
     elif field_type == SINGLE_OPTION:
-        return pascal_case(data_type['name'], strict=False) + \
-            pascal_case(data_type_field['name'], strict=False)
+        enum_prefix = pascal_case(data_type['name'], strict=False)
+        enum_suffix = pascal_case(data_type_field['name'], strict=False)
+        return with_required(f'{enum_prefix}{enum_suffix}', is_required)
     elif field_type == MULTIPLE_OPTION:
         enum_prefix = pascal_case(data_type['name'], strict=False)
         enum_suffix = pascal_case(data_type_field['name'], strict=False)
-        return f'[{enum_prefix}{enum_suffix}!]'
+        return with_required(f'[{enum_prefix}{enum_suffix}!]', is_required)
 
 
 def has_files(args):
@@ -247,6 +249,7 @@ def options_without_data(options):
 
     return new_options
 
+
 def result_name_suffix(query):
     if query == 'findMany':
         return 'Collection'
@@ -254,3 +257,10 @@ def result_name_suffix(query):
         return ''
     else:
         raise NolocoQueryNotSupportedError(query)
+
+
+def with_required(gql_type, is_required):
+    if is_required:
+        return f'{gql_type}!'
+    else:
+        return gql_type

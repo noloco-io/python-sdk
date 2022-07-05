@@ -12,7 +12,7 @@ class TestBuildDataTypeMutationArgs(TestCase):
     def test_top_level_field(self):
         data_type = {
             'fields': [
-                {'name': 'a', 'type': 'TEXT', 'relationship': None}
+                {'name': 'a', 'type': 'TEXT', 'relationship': None, 'required': False}
             ]
         }
         data_types = [data_type]
@@ -30,7 +30,7 @@ class TestBuildDataTypeMutationArgs(TestCase):
     def test_forward_relationship_field(self):
         data_type = {
             'fields': [
-                {'name': 'a', 'type': 'A', 'relationship': MANY_TO_ONE}
+                {'name': 'a', 'type': 'A', 'relationship': MANY_TO_ONE, 'required': False}
             ]
         }
         data_types = [data_type]
@@ -48,7 +48,7 @@ class TestBuildDataTypeMutationArgs(TestCase):
     def test_file_field(self):
         data_type = {
             'fields': [
-                {'name': 'a', 'type': 'file', 'relationship': ONE_TO_ONE}
+                {'name': 'a', 'type': 'file', 'relationship': ONE_TO_ONE, 'required': False}
             ]
         }
         data_types = [data_type]
@@ -68,12 +68,12 @@ class TestBuildDataTypeMutationArgs(TestCase):
             'type': 'data_type_1',
             'fields': []
         }
-        related_data_type = {
-            'type': 'data_type_2',
-            'fields': [
-                {'name': 'b', 'reverseName': 'a', 'type': 'data_type_1', 'relationship': MANY_TO_ONE}
-            ]
-        }
+        related_data_type = {'type': 'data_type_2',
+                             'fields': [{'name': 'b',
+                                         'reverseName': 'a',
+                                         'type': 'data_type_1',
+                                         'relationship': MANY_TO_ONE,
+                                         'required': False}]}
         data_types = [data_type, related_data_type]
         args = {'a': [1, 2, 3]}
 

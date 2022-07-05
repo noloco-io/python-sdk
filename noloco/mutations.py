@@ -5,7 +5,8 @@ from noloco.exceptions import (
 from noloco.fields import DataTypeFieldsBuilder
 from noloco.utils import (
     build_operation_args,
-    gql_type)
+    gql_type,
+    with_required)
 from pydash import (
     find,
     get,
@@ -33,6 +34,8 @@ class MutationBuilder:
             data_type_field = find(data_type_fields)
 
             if data_type_field is not None:
+                is_required = data_type_field['required']
+
                 # The field is either a top-level or relationship field on the
                 # data type.
                 if data_type_field['relationship'] is None and \
@@ -40,16 +43,18 @@ class MutationBuilder:
                     # This is a top-level field, so map the arg onto a
                     # primitive.
                     mutation_args[arg_name] = {
-                        'type': gql_type(data_type, data_type_field),
-                        'value': arg_value
-                    }
+                        'type': gql_type(
+                            data_type,
+                            data_type_field,
+                            is_required),
+                        'value': arg_value}
                 elif get(arg_value, 'connect') is not None:
                     # This is a relationship field, so map the arg onto an Id
                     # arg.
                     # TODO - stronger validation and error handling.
                     # TODO - consider supporting connecting on other fields.
                     mutation_args[arg_name + 'Id'] = {
-                        'type': 'ID',
+                        'type': with_required('ID', is_required),
                         'value': arg_value['connect']['id']
                     }
                 elif data_type_field['type'] == 'file':
@@ -58,12 +63,12 @@ class MutationBuilder:
                     # TODO - stronger validation and error handling.
                     if data_type_field['relationship'] == MANY_TO_MANY:
                         mutation_args[arg_name] = {
-                            'type': '[Upload!]',
+                            'type': with_required('[Upload!]', is_required),
                             'value': arg_value
                         }
                     else:
                         mutation_args[arg_name] = {
-                            'type': 'Upload',
+                            'type': with_required('Upload', is_required),
                             'value': arg_value
                         }
                 else:
@@ -80,10 +85,8 @@ class MutationBuilder:
                 if related_field is not None:
                     # This is a reverse relationship field and can be
                     # connected.
-                    mutation_args[arg_name + 'Id'] = {
-                        'type': '[ID!]',
-                        'value': arg_value
-                    }
+                    mutation_args[arg_name + 'Id'] = {'type': with_required(
+                        '[ID!]', related_field['required']), 'value': arg_value}
                 else:
                     # This field doesn't exist on the type.
                     raise NolocoFieldNotFoundError(arg_name)

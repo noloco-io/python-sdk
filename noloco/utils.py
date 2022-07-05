@@ -208,28 +208,29 @@ def gql_args(args):
     return variables
 
 
-def gql_type(data_type, data_type_field):
+def gql_type(data_type, data_type_field, is_required=False):
     field_type = data_type_field['type']
 
     if field_type == TEXT:
-        return 'String'
+        return with_required('String', is_required)
     elif field_type == DATE:
-        return 'DateTime'
+        return with_required('DateTime', is_required)
     elif field_type == INTEGER:
-        return 'Int'
+        return with_required('Int', is_required)
     elif field_type == DECIMAL:
-        return 'Float'
+        return with_required('Float', is_required)
     elif field_type == DURATION:
-        return 'Duration'
+        return with_required('Duration', is_required)
     elif field_type == BOOLEAN:
-        return 'Boolean'
+        return with_required('Boolean', is_required)
     elif field_type == SINGLE_OPTION:
-        return pascal_case(data_type['name'], strict=False) + \
-            pascal_case(data_type_field['name'], strict=False)
+        enum_prefix = pascal_case(data_type['name'], strict=False)
+        enum_suffix = pascal_case(data_type_field['name'], strict=False)
+        return with_required(f'{enum_prefix}{enum_suffix}', is_required)
     elif field_type == MULTIPLE_OPTION:
         enum_prefix = pascal_case(data_type['name'], strict=False)
         enum_suffix = pascal_case(data_type_field['name'], strict=False)
-        return f'[{enum_prefix}{enum_suffix}!]'
+        return with_required(f'[{enum_prefix}{enum_suffix}!]', is_required)
 
 
 def has_files(args):
@@ -272,3 +273,10 @@ def reverse_name_matches_relationship_name(
         return reverse_collection_name == relationship_name
     else:
         return reverse_name == relationship_name
+
+
+def with_required(gql_type, is_required):
+    if is_required:
+        return f'{gql_type}!'
+    else:
+        return gql_type

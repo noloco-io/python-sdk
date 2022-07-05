@@ -1,5 +1,6 @@
 from noloco.constants import (
     BOOLEAN,
+    COLLECTION,
     DATE,
     DECIMAL,
     DURATION,
@@ -158,16 +159,14 @@ def find_relationship_data_type(
                     # If the reverse name is populated and matches the parent
                     # type then we have found the data type the relationship
                     # goes to.
-                    if field['reverseName'] is not None and \
-                            field['reverseName'] != '':
-                        reverseName = field['reverseName'] + 'Collection'
-                        if reverseName == relationship_name:
-                            return {
-                                'data_type': candidate_data_type,
-                                'is_collection':
-                                    field['relationship'] == MANY_TO_MANY or
-                                    field['relationship'] == MANY_TO_ONE
-                            }
+                    is_collection = field['relationship'] == MANY_TO_MANY or \
+                        field['relationship'] == MANY_TO_ONE
+                    if reverse_name_matches_relationship_name(
+                            field, is_collection, relationship_name):
+                        return {
+                            'data_type': candidate_data_type,
+                            'is_collection': is_collection
+                        }
                     # If the reverse name is not populated but this field is a
                     # one-to-one relationship and the data type name matches
                     # the relationship name then we have found the data type
@@ -250,6 +249,7 @@ def options_without_data(options):
 
     return new_options
 
+
 def result_name_suffix(query):
     if query == 'findMany':
         return 'Collection'
@@ -257,3 +257,18 @@ def result_name_suffix(query):
         return ''
     else:
         raise NolocoQueryNotSupportedError(query)
+
+
+def reverse_name_matches_relationship_name(
+        field,
+        is_collection,
+        relationship_name):
+    reverse_name = field['reverseName']
+
+    if reverse_name is None or reverse_name == '':
+        return False
+    elif is_collection:
+        reverse_collection_name = field['reverseName'] + COLLECTION
+        return reverse_collection_name == relationship_name
+    else:
+        return reverse_name == relationship_name

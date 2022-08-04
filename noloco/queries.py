@@ -22,6 +22,7 @@ PROJECT_DOCUMENT_QUERY = '''query ($projectId: String!) {
         display
         type
         unique
+        required
         relationship
         reverseDisplayName
         reverseName

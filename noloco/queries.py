@@ -75,7 +75,7 @@ class QueryBuilder:
             data_types,
             options,
             flattened_options):
-        is_collection = query_type == 'find' # TODO - clean this up
+        is_collection = query_type == 'findMany'  # TODO - clean this up
         query_args = build_operation_args(flattened_options)
 
         query_fragment = self.fields_builder.build_fields(
@@ -87,9 +87,9 @@ class QueryBuilder:
             is_collection)
 
         if is_collection:
-          query_template = DATA_TYPE_COLLECTION_QUERY
+            query_template = DATA_TYPE_COLLECTION_QUERY
         else:
-          query_template = DATA_TYPE_QUERY
+            query_template = DATA_TYPE_QUERY
 
         query = query_template.format(
             query_args=query_args,

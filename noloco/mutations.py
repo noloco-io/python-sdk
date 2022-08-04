@@ -7,12 +7,14 @@ from noloco.fields import DataTypeFieldsBuilder
 from noloco.utils import (
     build_operation_args,
     gql_type,
+    with_required,
     is_multi_relationship,
-    is_reverse_multi_relationship, pascal_case)
+    is_reverse_multi_relationship, pascal_case,
+    with_required)
 from pydash import (
     find,
     get
-    )
+)
 
 
 DATA_TYPE_MUTATION = '''mutation{mutation_args} {{
@@ -36,6 +38,8 @@ class MutationBuilder:
             data_type_field = find(data_type_fields)
 
             if data_type_field is not None:
+                is_required = data_type_field['required']
+
                 # The field is either a top-level or relationship field on the
                 # data type.
                 if data_type_field['relationship'] is None and \
@@ -43,40 +47,51 @@ class MutationBuilder:
                     # This is a top-level field, so map the arg onto a
                     # primitive.
                     mutation_args[arg_name] = {
-                        'type': gql_type(data_type_field['type']),
-                        'value': arg_value
-                    }
+                        'type': gql_type(
+                            data_type,
+                            data_type_field,
+                            is_required),
+                        'value': arg_value}
                 elif get(arg_value, 'connect') is not None:
                     # This is a relationship field, so map the arg onto an Id
                     # arg.
                     # TODO - stronger validation and error handling.
                     # TODO - consider supporting connecting on other fields.
+
                     connection_value = arg_value['connect']
                     if is_multi_relationship(data_type_field['relationship']):
-                        
+
                         if not isinstance(connection_value, list):
-                            raise NolocoInvalidMultiFieldConnectionError(arg_name)
+                            raise NolocoInvalidMultiFieldConnectionError(
+                                arg_name)
 
                         mutation_args[arg_name + 'Id'] = {
-                            'type': '[ID!]',
+                            'type': with_required('[ID!]', is_required),
                             'value': [connection['id'] for connection in connection_value]
                         }
-                    else: 
+                    else:
                         if not isinstance(connection_value, dict):
-                            raise NolocoInvalidSingleFieldConnectionError(arg_name)
+                            raise NolocoInvalidSingleFieldConnectionError(
+                                arg_name)
 
                         mutation_args[arg_name + 'Id'] = {
-                            'type': 'ID',
+                            'type': with_required('ID', is_required),
                             'value': connection_value['id']
                         }
                 elif data_type_field['type'] == 'file':
                     # This is a file upload field, so map the arg onto an
                     # Upload arg, although do not open the file yet.
                     # TODO - stronger validation and error handling.
-                    mutation_args[arg_name] = {
-                        'type': 'Upload',
-                        'value': arg_value
-                    }
+                    if is_multi_relationship(data_type_field['relationship']):
+                        mutation_args[arg_name] = {
+                            'type': with_required('[Upload!]', is_required),
+                            'value': arg_value
+                        }
+                    else:
+                        mutation_args[arg_name] = {
+                            'type': with_required('Upload', is_required),
+                            'value': arg_value
+                        }
                 else:
                     raise NolocoUnknownError()
             else:
@@ -95,20 +110,22 @@ class MutationBuilder:
                         connection_value = arg_value['connect']
 
                         if not isinstance(connection_value, list):
-                            raise NolocoInvalidMultiFieldConnectionError(arg_name)
+                            raise NolocoInvalidMultiFieldConnectionError(
+                                arg_name)
 
                         mutation_args[arg_name + 'Id'] = {
-                            'type': '[ID!]',
+                            'type': with_required('[ID!]', related_field['required']),
                             'value': [connection['id'] for connection in connection_value]
                         }
                     else:
                         connection_value = arg_value['connect']
 
                         if not isinstance(connection_value, dict):
-                            raise NolocoInvalidSingleFieldConnectionError(arg_name)
+                            raise NolocoInvalidSingleFieldConnectionError(
+                                arg_name)
 
                         mutation_args[arg_name + 'Id'] = {
-                            'type': 'ID',
+                            'type': with_required('ID', related_field['required']),
                             'value': connection_value['id']
                         }
                 else:

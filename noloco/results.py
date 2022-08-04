@@ -81,6 +81,8 @@ class CollectionResult:
         self.__result_name = result_name
 
         self.total_count = result['totalCount']
+        self.has_previous_page = result['pageInfo']['hasPreviousPage']
+        self.has_next_page = result['pageInfo']['hasNextPage']
         self.data = []
         for index, edge in enumerate(result['edges']):
             self.data.append(
@@ -91,6 +93,21 @@ class CollectionResult:
                     result_path + f'[{index}]',
                     options,
                     client))
+
+    def __str__(self):
+        total_count_str = f'\'total_count\': {str(self.total_count)}'
+        has_previous_page_str = \
+            f'\'has_previous_page\': {str(self.has_previous_page)}'
+        has_next_page_str = f'\'has_next_page\': {str(self.has_next_page)}'
+        data_str = f'\'data\': {str(self.data)}'
+
+        properties_str = ', '.join([
+            total_count_str,
+            has_previous_page_str,
+            has_next_page_str,
+            data_str])
+
+        return f'{{{properties_str}}}'
 
     def __options_path(self):
         return sub('\[[0-9]+\]', '', self.__result_path)

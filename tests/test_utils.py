@@ -4,8 +4,11 @@ from noloco.utils import (
     build_operation_arg,
     build_operation_args,
     gql_args,
-    has_files, pascal_case)
+    has_files, pascal_case,
+    gql_type,
+    with_required)
 from unittest import TestCase
+
 
 class TestPascalCase(TestCase):
     def test_pascal_case(self):
@@ -14,6 +17,7 @@ class TestPascalCase(TestCase):
         self.assertEqual('NameWithSpace', pascal_case('name with space'))
         self.assertEqual('NameWithSpace', pascal_case('nameWithSpace'))
         self.assertEqual('Namewithoutspace', pascal_case('namewithoutspace'))
+
 
 class TestBuildDataTypeArg(TestCase):
     def test_build_data_type_arg_builds_arg_from_name(self):
@@ -112,6 +116,142 @@ class TestGqlArgs(TestCase):
         self.assertEqual({'a': 'b', 'c': 1}, built_args)
 
 
+class TestGqlType(TestCase):
+    def test_gql_type_maps_optional_text_to_string(self):
+        data_type = {}
+        data_type_field = {'type': 'TEXT'}
+
+        mapped_type = gql_type(data_type, data_type_field)
+
+        self.assertEqual('String', mapped_type)
+
+    def test_gql_type_maps_required_text_to_string(self):
+        data_type = {}
+        data_type_field = {'required': True, 'type': 'TEXT'}
+
+        mapped_type = gql_type(data_type, data_type_field, True)
+
+        self.assertEqual('String!', mapped_type)
+
+    def test_gql_type_maps_optional_date_to_datetime(self):
+        data_type = {}
+        data_type_field = {'type': 'DATE'}
+
+        mapped_type = gql_type(data_type, data_type_field)
+
+        self.assertEqual('DateTime', mapped_type)
+
+    def test_gql_type_maps_required_date_to_datetime(self):
+        data_type = {}
+        data_type_field = {'required': True, 'type': 'DATE'}
+
+        mapped_type = gql_type(data_type, data_type_field, True)
+
+        self.assertEqual('DateTime!', mapped_type)
+
+    def test_gql_type_maps_optional_integer_to_int(self):
+        data_type = {}
+        data_type_field = {'type': 'INTEGER'}
+
+        mapped_type = gql_type(data_type, data_type_field)
+
+        self.assertEqual('Int', mapped_type)
+
+    def test_gql_type_maps_required_integer_to_int(self):
+        data_type = {}
+        data_type_field = {'required': True, 'type': 'INTEGER'}
+
+        mapped_type = gql_type(data_type, data_type_field, True)
+
+        self.assertEqual('Int!', mapped_type)
+
+    def test_gql_type_maps_optional_decimal_to_float(self):
+        data_type = {}
+        data_type_field = {'type': 'DECIMAL'}
+
+        mapped_type = gql_type(data_type, data_type_field)
+
+        self.assertEqual('Float', mapped_type)
+
+    def test_gql_type_maps_required_decimal_to_float(self):
+        data_type = {}
+        data_type_field = {'required': True, 'type': 'DECIMAL'}
+
+        mapped_type = gql_type(data_type, data_type_field, True)
+
+        self.assertEqual('Float!', mapped_type)
+
+    def test_gql_type_maps_optional_duration_to_duration(self):
+        data_type = {}
+        data_type_field = {'type': 'DURATION'}
+
+        mapped_type = gql_type(data_type, data_type_field)
+
+        self.assertEqual('Duration', mapped_type)
+
+    def test_gql_type_maps_required_duration_to_duration(self):
+        data_type = {}
+        data_type_field = {'required': True, 'type': 'DURATION'}
+
+        mapped_type = gql_type(data_type, data_type_field, True)
+
+        self.assertEqual('Duration!', mapped_type)
+
+    def test_gql_type_maps_optional_boolean_to_boolean(self):
+        data_type = {}
+        data_type_field = {'type': 'BOOLEAN'}
+
+        mapped_type = gql_type(data_type, data_type_field)
+
+        self.assertEqual('Boolean', mapped_type)
+
+    def test_gql_type_maps_required_boolean_to_boolean(self):
+        data_type = {}
+        data_type_field = {'required': True, 'type': 'BOOLEAN'}
+
+        mapped_type = gql_type(data_type, data_type_field, True)
+
+        self.assertEqual('Boolean!', mapped_type)
+
+    def test_gql_type_maps_optional_single_option_to_named_type(self):
+        data_type = {'name': 'dataType'}
+        data_type_field = {'name': 'dataField', 'type': 'SINGLE_OPTION'}
+
+        mapped_type = gql_type(data_type, data_type_field)
+
+        self.assertEqual('DataTypeDataField', mapped_type)
+
+    def test_gql_type_maps_required_single_option_to_named_type(self):
+        data_type = {'name': 'dataType'}
+        data_type_field = {
+            'name': 'dataField',
+            'required': True,
+            'type': 'SINGLE_OPTION'}
+
+        mapped_type = gql_type(data_type, data_type_field, True)
+
+        self.assertEqual('DataTypeDataField!', mapped_type)
+
+    def test_gql_type_maps_optional_multiple_option_to_named_type(self):
+        data_type = {'name': 'dataType'}
+        data_type_field = {'name': 'dataField', 'type': 'MULTIPLE_OPTION'}
+
+        mapped_type = gql_type(data_type, data_type_field)
+
+        self.assertEqual('[DataTypeDataField!]', mapped_type)
+
+    def test_gql_type_maps_required_multiple_option_to_named_type(self):
+        data_type = {'name': 'dataType'}
+        data_type_field = {
+            'name': 'dataField',
+            'required': True,
+            'type': 'MULTIPLE_OPTION'}
+
+        mapped_type = gql_type(data_type, data_type_field, True)
+
+        self.assertEqual('[DataTypeDataField!]!', mapped_type)
+
+
 class TestHasFiles(TestCase):
     def test_has_files_no_args(self):
         args = {}
@@ -152,3 +292,13 @@ class TestHasFiles(TestCase):
         args['f'] = {'type': 'String'}
 
         self.assertFalse(has_files(args))
+
+
+class TestWithRequired(TestCase):
+    def test_with_required_optional(self):
+        mapped_type = 'A'
+        self.assertEqual(mapped_type, with_required(mapped_type, False))
+
+    def test_with_required_required(self):
+        mapped_type = 'A'
+        self.assertEqual(f'{mapped_type}!', with_required(mapped_type, True))

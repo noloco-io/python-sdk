@@ -2,19 +2,23 @@ from gql import Client
 from gql.transport.aiohttp import AIOHTTPTransport
 from noloco.project import Project
 from noloco.requests import Command
+from noloco.utils import options_without_data
 
 
 BASE_URL = 'https://api.portals.noloco.io'
 
 
 class Noloco:
-    def __init__(self, account_api_key, portal_name):
+    def __init__(self, account_api_key, portal_name, base_url=BASE_URL):
         """Initialises a Noloco client.
 
         Args:
             account_api_key: The Account API Key from your Integrations & API
                 Keys settings page.
             portal_name: The name of your Noloco portal.
+            base_url: The URL that the API is hosted at. This is an optional
+                parameter and if you are using the production API you should
+                not provide it.
 
         Returns:
             A Noloco client.
@@ -27,40 +31,39 @@ class Noloco:
         # Build the account client that will be used to interact with the
         # project document.
         account_transport = AIOHTTPTransport(
-            url=BASE_URL, headers={'Authorization': account_api_key})
+            url=base_url, headers={'Authorization': account_api_key})
         account_client = Client(
             transport=account_transport,
             fetch_schema_from_transport=False)
 
         # Fetch the project document, lookup and validate the project API key
         # and cache the data types locally.
-        self.__project = Project(account_client, BASE_URL, portal_name)
+        self.__project = Project(account_client, base_url, portal_name)
 
-    def create(self, data_type_name, value, options={}):
+    def create(self, data_type_name, options):
         """Creates a record in a Noloco collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            value: The record to create. For example:
-
-                {
-                    'firstName': 'Jane',
-                    'lastName': 'Doe',
-                    'email': 'jane@noloco.io',
-                    'company': {
-                        'connect': {
-                            id: 2
-                        }
-                    },
-                    'profilePicture': [open file]
-                }
-            options: After creating the record in the Noloco collection, the
-                created record will be returned along with it's top-level
+            options: The record to create as the 'data' field and any other
+                options; after creating the record in the Noloco collection,
+                the created record will be returned along with it's top-level
                 fields. If you would like to also return some relationship
                 fields you can do them using options. For example:
 
                 {
+                    'data': {
+                        'firstName': 'Jane',
+                        'lastName': 'Doe',
+                        'email': 'jane@noloco.io',
+                        'company': {
+                            'connect': {
+                                id: 2
+                            }
+                        },
+                        'profilePicture': [open file]
+                    },
                     'include': {
                         'company': {
                             'include': {
@@ -75,42 +78,32 @@ class Noloco:
         """
         return Command(self.__project) \
             .for_data_type(data_type_name) \
-            .with_options(options) \
+            .with_options(options_without_data(options)) \
             .mutate('create') \
-            .value(value) \
-            .with_pagination_callback(self.get) \
+            .value(options['data']) \
+            .with_pagination_callback(self.findUnique) \
             .build() \
             .execute()
 
-    def delete(self, data_type_name, options={}):
+    def delete(self, data_type_name, id):
         """Deletes a record from a Noloco collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            options: The configuration for the deletion. At a minimum this must
-                identify the record to be deleted by any of its unique fields.:
-
-                {
-                    'where': {
-                        'id': {
-                            'equals': 2
-                        }
-                    }
-                }
+            id: The ID of the record to delete.
 
         Returns:
             None.
         """
         return Command(self.__project) \
             .for_data_type(data_type_name) \
-            .with_options(options) \
             .mutate('delete') \
-            .with_lookup('ID!') \
+            .with_id_lookup(id) \
             .build() \
             .execute()
 
-    def find(self, data_type_name, options={}):
+    def findMany(self, data_type_name, options={}):
         """Searches a Noloco collection for records matching the provided
         criteria.
 
@@ -146,12 +139,12 @@ class Noloco:
         return Command(self.__project) \
             .for_data_type(data_type_name) \
             .with_options(options) \
-            .query('find') \
-            .with_pagination_callback(self.find) \
+            .query('findMany') \
+            .with_pagination_callback(self.findMany) \
             .build() \
             .execute()
 
-    def get(self, data_type_name, options={}):
+    def findUnique(self, data_type_name, options):
         """Fetches a record from a Noloco collection that you identify by any
         of its unique fields.
 
@@ -181,42 +174,39 @@ class Noloco:
         return Command(self.__project) \
             .for_data_type(data_type_name) \
             .with_options(options) \
-            .query('get') \
-            .with_lookup() \
-            .with_pagination_callback(self.get) \
+            .query('findUnique') \
+            .with_unique_lookup() \
+            .with_pagination_callback(self.findUnique) \
             .build() \
             .execute()
 
-    def update(self, data_type_name, value, options={}):
+    def update(self, data_type_name, id, options):
         """Updates a record in a collection.
 
         Args:
             data_type_name: The name of the data type the collection is for.
                 For example 'user'.
-            value: The record to update. For example:
+            id: the ID of the record to update.
+            options: The record to update as the 'data' field and any other
+                options; after creating the record in the Noloco collection,
+                the created record will be returned along with it's top-level
+                fields. If you would like to also return some relationship
+                fields you can do them using options. For example:
 
                 {
-                    'firstName': 'Jane',
-                    'lastName': 'Doe',
-                    'email': 'jane@noloco.io',
-                    'company': {
-                        'connect': {
-                            id: 2
-                        }
+                    'data': {
+                        'firstName': 'Jane',
+                        'lastName': 'Doe',
+                        'email': 'jane@noloco.io',
+                        'company': {
+                            'connect': {
+                                id: 2
+                            }
+                        },
+                        'profilePicture': [open file]
                     },
-                    'profilePicture': [open file]
-                }
-            options: The schema that you would like back from Noloco. For
-                example:
-
-                {
                     'include': {
                         'role': True
-                    }
-                    'where': {
-                        'id': {
-                            'equals': 2
-                        }
                     }
                 }
 
@@ -225,10 +215,10 @@ class Noloco:
         """
         return Command(self.__project) \
             .for_data_type(data_type_name) \
-            .with_options(options) \
+            .with_options(options_without_data(options)) \
             .mutate('update') \
-            .with_lookup('ID!') \
-            .value(value) \
-            .with_pagination_callback(self.get) \
+            .with_id_lookup(id) \
+            .value(options['data']) \
+            .with_pagination_callback(self.findUnique) \
             .build() \
             .execute()

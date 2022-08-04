@@ -37,7 +37,6 @@ class NolocoInvalidSingleFieldConnectionError(Exception):
             f'Value for argument "{argument_name}" must be a single connection')
 
 
-
 class NolocoProjectApiKeyError(Exception):
     def __init__(self, project_name, error):
         super().__init__(
@@ -51,6 +50,7 @@ class NolocoQueryNotSupportedError(Exception):
     def __init__(self, query_name):
         super().__init__(
             f'{query_name} queries are not supported.')
+
 
 class NolocoUnknownError(Exception):
     def __init__(self, error):

@@ -70,19 +70,26 @@ To create a new author and then create a new book linked to them you would write
 
 ```
 author = client.create('author', {
-    'firstName': 'Jane',
-    'lastName': 'Doe'
+    'data': {
+        'firstName': 'Jane',
+        'lastName': 'Doe'
+    }
 })
 
 book = client.create('book', {
-    'title': 'My Biography',
-    'author': {
-        'connect': {
-            'id': author.id
-        }
+    'data': {
+        'title': 'My Biography',
+        'author': {
+            'connect': {
+                'id': author.id
+            }
+        },
+        'pageCount': 500
     },
-    'pageCount': 500
-}, {'include': {'author': True}})
+    'include': {
+        'author': True
+    }
+})
 ```
 
 You might be wondering what the significance of `{'include': {'author': True}}` is... Whenever we return a record from the API we will always return all the top-level fields (including files) by default. However we do not include relationship fields unless you specifically tell the client to include them in the `options` parameters. Because this call to create a `book` is including `author` in its `options`, when the created `book` is returned, the author relationship will also be included. In an interpreter we can see this:
@@ -131,7 +138,7 @@ $ print(book)
 If you know the value of a unique field of a record in a collection then you can read it from the collection:
 
 ```
-book = client.get('book', {
+book = client.findUnique('book', {
     'where': {
         'id': {
             'equals': 1
@@ -156,7 +163,7 @@ Jane
 If you do not know the value of a unique field, or you just want to read multiple fields at once then you can do so:
 
 ```
-book_collection = client.find('book', {
+book_collection = client.findMany('book', {
     'where': {
         'pageCount': {
             'lt': 250
@@ -173,23 +180,20 @@ book_collection = client.find('book', {
 This will return a `CollectionResult` instance. This is a paginated set of results limited to the value of `first` at a time. You can check the total number of records that match your criteria:
 
 ```
-$ print(book_collection.total_count)
+$ print(book_collection)
 
-51
-```
-
-You can access the current page of data:
-
-```
-$ print(book_collection.data)
-
-[
-    {'id': '10', ...},
-    {'id': '14', ...},
-    {'id': '16', ...},
-    {'id': '17', ...},
-    {'id': '22', ...},
-]
+{
+    'total_count': 51,
+    'has_previous_page': False,
+    'has_next_page': True,
+    'data': [
+        {'id': '10', ...},
+        {'id': '14', ...},
+        {'id': '16', ...},
+        {'id': '17', ...},
+        {'id': '22', ...},
+    ]
+}
 ```
 
 We then provide two methods that let you page through the data:
@@ -197,33 +201,48 @@ We then provide two methods that let you page through the data:
 ```
 $ print(book_collection.next_page().data)
 
-[
-    {'id': '23', ...},
-    {'id': '27', ...},
-    {'id': '29', ...},
-    {'id': '30', ...},
-    {'id': '38', ...},
-]
+{
+    'total_count': 51,
+    'has_previous_page': True,
+    'has_next_page': True,
+    'data': [
+        {'id': '23', ...},
+        {'id': '27', ...},
+        {'id': '29', ...},
+        {'id': '30', ...},
+        {'id': '38', ...},
+    ]
+}
 
-$ print(book_collection.next_page().previous_page().data)
+$ print(book_collection.next_page().previous_page())
 
-[
-    {'id': '10', ...},
-    {'id': '14', ...},
-    {'id': '16', ...},
-    {'id': '17', ...},
-    {'id': '22', ...},
-]
+{
+    'total_count': 51,
+    'has_previous_page': False,
+    'has_next_page': True,
+    'data': [
+        {'id': '10', ...},
+        {'id': '14', ...},
+        {'id': '16', ...},
+        {'id': '17', ...},
+        {'id': '22', ...},
+    ]
+}
 ```
 
 ### Updating a record in a collection
 
-If you know the value of a unique field of a record in a collection then you can update it in the collection:
+If you know the ID of a record in a collection then you can update it in the collection:
 
 ```
-book = client.update('book', {
-    'pageCount': 499,
-}, {'where': {'id': {'equals': 1}}})
+book = client.update('book', 1, {
+    'data': {
+        'pageCount': 200
+    },
+    'include': {
+        'author': True
+    }
+})
 ```
 
 You can `print` it like we did in the previous example, or you can directly access fields on the result. This is because we wrap all responses in a `Result` class that inherits from `dict`:
@@ -244,14 +263,50 @@ $ print(book)
 
 ### Deleting a record from a collection
 
-Finally, if you know the value of a unique field of a record in a collection then you can delete it from the collection:
+Finally, if you know the ID of a record in a collection then you can delete it from the collection:
 
 ```
-client.delete('book', {
-    'where': {
-        'id': {
-            'equals': 1
-        }
-    }
-})
+client.delete('book', 1)
 ```
+
+## Field types
+
+You can use the following table to reference the mapping from Noloco field types onto Python types. For fields that are Python strings requiring a specific format, the format we expect is given here.
+
+| Noloco Field Type | Python Type | Expected Formats           |
+|-------------------|-------------|----------------------------|
+| Boolean           | bool        |                            |
+| Date              | str         | 'YYYY-MM-DDTHH:MM:SS.XXXZ' |
+| Decimal           | float       |                            |
+| Duration          | str         | 'HH:MM:SS'                 |
+| File/Upload       | (see below) |                            |
+| Integer           | int         |                            |
+| Multiple Option   | list        | ['SCREAMING_SNAKE_CASE']   |
+| Single Option     | str         | 'SCREAMING_SNAKE_CASE'     |
+| Text              | str         |                            |
+
+### Files
+
+Note that unlike other the types, files have a different Python type depending on whether they are being given as an input or an output.
+
+When you are inputting a file to the SDK to be uploaded, you need to give the SDK an opened file, for example:
+
+```
+profile_picture = open('/Users/user/Pictures/profile_picture.jpeg', 'rb')
+```
+
+You will need to manage the closing of this file yourself after the SDK is done with it.
+
+When the SDK is outputting a file to you, it will give you a dictionary with information about the file:
+
+```
+{
+    'id': '...',
+    'uuid': '...',
+    'fileType': 'IMAGE',
+    'url': 'https://app-media.noloco.app/[project-name]/...profile_picture.jpeg',
+    'name': '%2FUsers%2Fuser%2FPictures%2Fprofile_picture.jpeg'
+}
+```
+
+You can use the URL to download the file if you need the contents.

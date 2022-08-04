@@ -16,7 +16,7 @@ from noloco.utils import (
     has_files,
     result_name_suffix, pascal_case)
 from pydash import (
-get)
+    get)
 
 
 class Command:
@@ -26,20 +26,22 @@ class Command:
         self.__query_builder = QueryBuilder()
 
         self.data_type_name = None
-        self.lookup_id_type = None
+        self.id_lookup = None
+        self.id_lookup_type = None
         self.mutation = None
         self.new_value = None
-        self.options = None
+        self.options = {}
         self.pagination_callback = None
         self.query_type = None
         self.result_name = None
+        self.unique_lookup = None
 
     def for_data_type(self, data_type_name):
         self.data_type_name = data_type_name
         return self
 
-    def with_lookup(self, lookup_id_type='ID'):
-        self.lookup_id_type = lookup_id_type
+    def with_id_lookup(self, id_lookup):
+        self.id_lookup = id_lookup
         return self
 
     def with_options(self, options):
@@ -54,9 +56,14 @@ class Command:
         self.new_value = new_value
         return self
 
+    def with_unique_lookup(self):
+        self.unique_lookup = True
+        return self
+
     def mutate(self, mutation):
         self.mutation = mutation
-        self.result_name = mutation + pascal_case(self.data_type_name)
+        self.result_name = mutation + pascal_case(
+            self.data_type_name)
         return self
 
     def query(self, query_type):
@@ -74,11 +81,12 @@ class Command:
                 data_types,
                 self.options)
 
-            if self.lookup_id_type is not None:
+            if self.id_lookup is not None:
+                typed_options['id'] = {'type': 'ID!', 'value': self.id_lookup}
+            elif self.unique_lookup is not None:
                 typed_options = change_where_to_lookup(
                     data_type,
-                    typed_options,
-                    self.lookup_id_type)
+                    typed_options)
 
             if self.new_value is not None:
                 mutation_args = self \
@@ -153,7 +161,8 @@ class BuiltCommand:
                 self.__command.options,
                 self.__pagination_callback)
         except TransportQueryError as err:
-            if get(err, 'extensions.code') == GRAPHQL_VALIDATION_FAILED and retry:
+            if get(err, 'extensions.code') == GRAPHQL_VALIDATION_FAILED and \
+                    retry:
                 self.__command.project.refresh()
                 return self.__command.build().execute(retry=False)
             else:

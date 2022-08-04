@@ -4,7 +4,8 @@ from noloco.utils import (
     build_operation_arg,
     build_operation_args,
     gql_args,
-    has_files, pascal_case,
+    has_files,
+    pascal_case,
     gql_type,
     with_required)
 from unittest import TestCase

@@ -14,7 +14,8 @@ from noloco.utils import (
     flatten_args,
     gql_args,
     has_files,
-    result_name_suffix, pascal_case)
+    result_name_suffix,
+    pascal_case)
 from pydash import (
     get)
 

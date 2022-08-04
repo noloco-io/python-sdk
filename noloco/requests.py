@@ -14,10 +14,10 @@ from noloco.utils import (
     flatten_args,
     gql_args,
     has_files,
-    result_name_suffix)
-from pydash import (
-    get,
+    result_name_suffix,
     pascal_case)
+from pydash import (
+    get)
 
 
 class Command:
@@ -64,7 +64,7 @@ class Command:
     def mutate(self, mutation):
         self.mutation = mutation
         self.result_name = mutation + pascal_case(
-            self.data_type_name, strict=False)
+            self.data_type_name)
         return self
 
     def query(self, query_type):

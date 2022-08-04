@@ -3,7 +3,9 @@ from noloco.constants import (
     ONE_TO_ONE)
 from noloco.utils import (
     build_data_type_args,
-    find_relationship_data_type)
+    find_field_by_name,
+    find_relationship_data_type,
+    is_multi_relationship)
 
 
 DATA_TYPE_FIELDS = '''{data_type_name}{data_type_args}
@@ -50,12 +52,12 @@ __typename'''.format(file_query=FILE_FIELDS)
 
 class DataTypeFieldsBuilder:
     def __build_related_fields(
-          self,
-          data_type_name,
-          data_type_full_name,
-          fields,
-          include,
-          data_types):
+            self,
+            data_type_name,
+            data_type_full_name,
+            fields,
+            include,
+            data_types):
         related_fields = []
 
         for relationship_name, ignore_children in include.items():
@@ -79,12 +81,12 @@ class DataTypeFieldsBuilder:
             is_collection = relationship_data_type['is_collection']
 
             relationship_schema = self.build_fields(
-                    relationship_name,
-                    relationship_data_type['data_type'],
-                    data_types,
-                    response,
-                    data_type_path=data_type_full_name + '_',
-                    is_collection=is_collection)
+                relationship_name,
+                relationship_data_type['data_type'],
+                data_types,
+                response,
+                data_type_path=data_type_full_name + '_',
+                is_collection=is_collection)
 
             related_fields.append(relationship_schema)
 
@@ -132,7 +134,7 @@ class DataTypeFieldsBuilder:
         # All file relationship fields on the data type are automatically
         # included in the requested schema.
         file_field_schema = self.__build_file_fields(
-          field for field in data_type['fields'] if field['type'] == 'file')
+            field for field in data_type['fields'] if field['type'] == 'file')
 
         all_field_names = primary_field_schema + \
             related_field_schema + \

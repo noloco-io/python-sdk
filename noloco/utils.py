@@ -5,6 +5,7 @@ from noloco.constants import (
     DECIMAL,
     DURATION,
     INTEGER,
+    TEXT,
     MANY_TO_MANY,
     MANY_TO_ONE,
     MULTIPLE_OPTION,
@@ -18,7 +19,12 @@ from noloco.exceptions import (
 from pydash import (
     find,
     get,
-    pascal_case)
+    camel_case)
+
+
+def pascal_case(str):
+    camel = camel_case(str)
+    return camel[:1].upper() + camel[1:]
 
 
 def annotate_collection_args(data_type, data_types, args):
@@ -37,7 +43,7 @@ def annotate_collection_args(data_type, data_types, args):
             'value': args['order_by']
         }
     if get(args, 'where') is not None:
-        whereType = pascal_case(data_type['name'], strict=False) + 'WhereInput'
+        whereType = pascal_case(data_type['name']) + 'WhereInput'
         annotated_args['where'] = {'type': whereType, 'value': args['where']}
 
     # Recursively process nested supported parameters.
@@ -142,9 +148,7 @@ def find_relationship_data_type(
         return {
             'data_type': find_data_type_by_name(
                 relationship_field['type'], data_types),
-            'is_collection':
-                relationship_field['relationship'] == MANY_TO_MANY or
-                relationship_field['relationship'] == ONE_TO_MANY
+            'is_collection': is_multi_relationship(relationship_field['relationship'])
         }
     else:
         # If there isn't a corresponding relationship field on the
@@ -224,12 +228,12 @@ def gql_type(data_type, data_type_field, is_required=False):
     elif field_type == BOOLEAN:
         return with_required('Boolean', is_required)
     elif field_type == SINGLE_OPTION:
-        enum_prefix = pascal_case(data_type['name'], strict=False)
-        enum_suffix = pascal_case(data_type_field['name'], strict=False)
+        enum_prefix = pascal_case(data_type['name'])
+        enum_suffix = pascal_case(data_type_field['name'])
         return with_required(f'{enum_prefix}{enum_suffix}', is_required)
     elif field_type == MULTIPLE_OPTION:
-        enum_prefix = pascal_case(data_type['name'], strict=False)
-        enum_suffix = pascal_case(data_type_field['name'], strict=False)
+        enum_prefix = pascal_case(data_type['name'])
+        enum_suffix = pascal_case(data_type_field['name'])
         return with_required(f'[{enum_prefix}{enum_suffix}!]', is_required)
 
 
@@ -258,6 +262,14 @@ def result_name_suffix(query):
         return ''
     else:
         raise NolocoQueryNotSupportedError(query)
+
+
+def is_multi_relationship(relationship):
+    return relationship == ONE_TO_MANY or relationship == MANY_TO_MANY
+
+
+def is_reverse_multi_relationship(relationship):
+    return relationship == MANY_TO_ONE or relationship == MANY_TO_MANY
 
 
 def reverse_name_matches_relationship_name(

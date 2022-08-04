@@ -4,10 +4,20 @@ from noloco.utils import (
     build_operation_arg,
     build_operation_args,
     gql_args,
-    gql_type,
     has_files,
+    pascal_case,
+    gql_type,
     with_required)
 from unittest import TestCase
+
+
+class TestPascalCase(TestCase):
+    def test_pascal_case(self):
+        self.assertEqual('Name', pascal_case('name'))
+        self.assertEqual('NameWithSpace', pascal_case('name with space'))
+        self.assertEqual('NameWithSpace', pascal_case('name with space'))
+        self.assertEqual('NameWithSpace', pascal_case('nameWithSpace'))
+        self.assertEqual('Namewithoutspace', pascal_case('namewithoutspace'))
 
 
 class TestBuildDataTypeArg(TestCase):

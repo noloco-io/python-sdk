@@ -4,14 +4,20 @@ from noloco.constants import (
     DECIMAL,
     DURATION,
     INTEGER,
-    TEXT)
+    TEXT,
+    MANY_TO_MANY, ONE_TO_MANY, MANY_TO_ONE)
 from noloco.exceptions import (
     NolocoDataTypeNotFoundError,
     NolocoQueryNotSupportedError)
 from pydash import (
     find,
     get,
-    pascal_case)
+    camel_case)
+
+
+def pascal_case(str):
+    camel = camel_case(str)
+    return camel[:1].upper() + camel[1:]
 
 
 def annotate_collection_args(data_type, data_types, args):
@@ -209,3 +215,11 @@ def result_name_suffix(query):
         return ''
     else:
         raise NolocoQueryNotSupportedError(query)
+
+
+def is_multi_relationship(relationship):
+    return relationship == ONE_TO_MANY or relationship == MANY_TO_MANY
+
+
+def is_reverse_multi_relationship(relationship):
+    return relationship == MANY_TO_ONE or relationship == MANY_TO_MANY

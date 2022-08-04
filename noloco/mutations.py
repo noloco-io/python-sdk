@@ -1,14 +1,18 @@
 from noloco.exceptions import (
     NolocoFieldNotFoundError,
+    NolocoInvalidMultiFieldConnectionError,
+    NolocoInvalidSingleFieldConnectionError,
     NolocoUnknownError)
 from noloco.fields import DataTypeFieldsBuilder
 from noloco.utils import (
     build_operation_args,
-    gql_type)
+    gql_type,
+    is_multi_relationship,
+    is_reverse_multi_relationship, pascal_case)
 from pydash import (
     find,
-    get,
-    pascal_case)
+    get
+    )
 
 
 DATA_TYPE_MUTATION = '''mutation{mutation_args} {{
@@ -47,10 +51,24 @@ class MutationBuilder:
                     # arg.
                     # TODO - stronger validation and error handling.
                     # TODO - consider supporting connecting on other fields.
-                    mutation_args[arg_name + 'Id'] = {
-                        'type': 'ID',
-                        'value': arg_value['connect']['id']
-                    }
+                    connection_value = arg_value['connect']
+                    if is_multi_relationship(data_type_field['relationship']):
+                        
+                        if not isinstance(connection_value, list):
+                            raise NolocoInvalidMultiFieldConnectionError(arg_name)
+
+                        mutation_args[arg_name + 'Id'] = {
+                            'type': '[ID!]',
+                            'value': [connection['id'] for connection in connection_value]
+                        }
+                    else: 
+                        if not isinstance(connection_value, dict):
+                            raise NolocoInvalidSingleFieldConnectionError(arg_name)
+
+                        mutation_args[arg_name + 'Id'] = {
+                            'type': 'ID',
+                            'value': connection_value['id']
+                        }
                 elif data_type_field['type'] == 'file':
                     # This is a file upload field, so map the arg onto an
                     # Upload arg, although do not open the file yet.
@@ -73,10 +91,26 @@ class MutationBuilder:
                 if related_field is not None:
                     # This is a reverse relationship field and can be
                     # connected.
-                    mutation_args[arg_name + 'Id'] = {
-                        'type': '[ID!]',
-                        'value': arg_value
-                    }
+                    if is_reverse_multi_relationship(related_field['relationship']):
+                        connection_value = arg_value['connect']
+
+                        if not isinstance(connection_value, list):
+                            raise NolocoInvalidMultiFieldConnectionError(arg_name)
+
+                        mutation_args[arg_name + 'Id'] = {
+                            'type': '[ID!]',
+                            'value': [connection['id'] for connection in connection_value]
+                        }
+                    else:
+                        connection_value = arg_value['connect']
+
+                        if not isinstance(connection_value, dict):
+                            raise NolocoInvalidSingleFieldConnectionError(arg_name)
+
+                        mutation_args[arg_name + 'Id'] = {
+                            'type': 'ID',
+                            'value': connection_value['id']
+                        }
                 else:
                     # This field doesn't exist on the type.
                     raise NolocoFieldNotFoundError(arg_name)

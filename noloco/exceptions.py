@@ -25,6 +25,19 @@ class NolocoFieldNotUniqueError(Exception):
             f'Field {field_name} in data type {data_type_name} is not unique.')
 
 
+class NolocoInvalidMultiFieldConnectionError(Exception):
+    def __init__(self, argument_name):
+        super().__init__(
+            f'Value for argument "{argument_name}" must be a list of connections')
+
+
+class NolocoInvalidSingleFieldConnectionError(Exception):
+    def __init__(self, argument_name):
+        super().__init__(
+            f'Value for argument "{argument_name}" must be a single connection')
+
+
+
 class NolocoProjectApiKeyError(Exception):
     def __init__(self, project_name, error):
         super().__init__(

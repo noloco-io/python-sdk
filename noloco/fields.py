@@ -5,7 +5,8 @@ from noloco.constants import (
 from noloco.utils import (
     build_data_type_args,
     find_field_by_name,
-    find_relationship_data_type)
+    find_relationship_data_type,
+    is_multi_relationship)
 
 
 DATA_TYPE_FIELDS = '''{data_type_name}{data_type_args}
@@ -73,7 +74,8 @@ class DataTypeFieldsBuilder:
                 response = ignore_children
 
             is_collection = relationship_field is None or \
-                relationship_field['relationship'] == MANY_TO_MANY
+                is_multi_relationship(relationship_field['relationship'])
+                
             relationship_schema = self.build_fields(
                     relationship_name,
                     relationship_data_type,

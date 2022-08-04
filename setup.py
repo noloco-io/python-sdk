@@ -5,7 +5,7 @@ from setuptools import (
 
 setup(
     name='noloco',
-    version='0.5.1',
+    version='0.5.0',
     description='CRUD operations for Noloco Collections',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

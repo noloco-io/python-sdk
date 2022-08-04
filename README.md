@@ -261,6 +261,57 @@ $ print(book)
 }
 ```
 
+### Setting related field values
+
+As you saw in the `create` example, you can connect an existing record to another record when you are creating that other record. The same logic applies to updates
+
+book = client.update('book', 1, {
+    'data': {
+        'author': {
+            'connect': {
+                'id': author.id
+            }
+        },
+    },
+    'include': {
+        'author': True
+    }
+})
+
+If your collection has a field that accepts multiple linked records, you can set them while creating up updating the record like so: 
+
+review_1 = client.create('review', {
+     'data': {
+        'name': 'Jane',
+        'rating': 5
+    }
+})
+
+review_2 = client.create('review', {
+     'data': {
+        'name': 'James',
+        'rating': 3
+    }
+})
+
+book = client.update('book', 1, {
+    'data': {
+        'reviews': {
+            'connect': [
+                {
+                    'id': review_1.id
+                },
+                {
+                    'id': review_2.id
+                },
+            }
+        },
+    },
+    'include': {
+        'reviews': True
+    }
+})
+
 ### Deleting a record from a collection
 
 Finally, if you know the ID of a record in a collection then you can delete it from the collection:
